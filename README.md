@@ -165,3 +165,119 @@ table(adult$capitalloss_cat)
 adult$capitalgain_cat = as.factor(adult$capitalgain_cat)
 adult$capitalloss_cat = as.factor(adult$capitalloss_cat)
 ```
+
+--Explore hoursperweek
+```{r}
+summary(adult$hoursperweek)
+describe(adult$hoursperweek)
+boxplot(adult$hoursperweek)
+boxplot.stats(adult$hoursperweek)$out
+
+```
+
+```{r}
+ggplot(aes(x = income, y = hoursperweek), data = adult) + 
+  geom_boxplot() +
+  stat_summary(fun.y = mean, 
+               geom = "point", 
+               col = "blue") +
+  coord_cartesian(ylim = c(0, 100)) +
+  ylab("hoursperweek") +
+  xlab("Income") +  
+  ggtitle("Box Plot of hoursperweek by Income") 
+
+par(mfrow=c(1,2))
+hist(adult$hoursperweek[adult$income=="<=50K"], xlim = c(0,100), xlab = "hoursperweek", main = "income <=50K")
+hist(adult$hoursperweek[adult$income==">50K"], xlm = c(0,100), xlab = "hoursperweek", main =  "income >50K")
+
+```
+
+
+The vriable has many outliers. 
+
+
+---Explore sex
+
+From graph, I observe that the percentage of women earning more than 50K a year is very less compared to that of men.
+```{r}
+
+ggplot(adult, aes(x = adult$sex, fill = adult$income)) +
+  geom_bar(position = "stack",na.rm = FALSE) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "Income", 
+       y = "Number of people",
+       fill = "Income") +
+  ggtitle("Income grouped by sex") +   
+  scale_y_continuous(breaks = seq(0,40000,1000))
+
+# Percentage of both the sex with income <50K and >=50K:
+prop.table(table(adult$sex, adult$income), margin = 1)*100
+```
+
+---Explore workclass
+```{r}
+
+summary(adult$workclass)
+
+ggplot(adult, aes(x = adult$workclass, fill = adult$income)) +
+  geom_bar(position = "stack",na.rm = FALSE) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "Income", 
+       y = "Number of people",
+       fill = "Income") +
+  ggtitle("Income grouped by workclass") +   
+  scale_y_continuous(breaks = seq(0,35000,1000))
+
+# Percentage of workclasses with income <50K and >=50K:
+prop.table(table(adult$workclass, adult$income), margin = 1)*100
+```
+ here a few questions arise.
+ 1) people in neverworked category should have 0 workhours and that may have <50K income unless they high capital gain whereas people working without pay should have nonzero working hours but also they  may have <50K income unless they high capital gain. lets explore.
+```{r}
+summary(adult[which(adult$workclass == "Never-worked"),])
+summary(adult[which(adult$workclass == "Without-pay"),])
+```
+From summary, its clear that there is some imbiguity in never-worked class (contains 10 rows) as they don't have zero working hours also there occupation is also unknown. So these 10 rows are conflicting. There are two options for that either we can delete these rows or assign 0 to hourperweek feature. I will go with first one.
+Also there are two cases from adult2 dataset where these are working without pay with 0 capital gain and still earning more than 50,000.
+
+```{r}
+adult[which(adult$workclass == "Without-pay" & adult$income == ">50K"),]
+```
+---Explore marital status
+
+```{r}
+
+summary(adult$maritalstatus)
+
+ggplot(adult, aes(x = adult$maritalstatus, fill = adult$income)) +
+  geom_bar(position = "stack",na.rm = FALSE) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "Income", 
+       y = "Number of people",
+       fill = "Income") +
+  ggtitle("Income grouped by maritalstatus") +   
+  scale_y_continuous(breaks = seq(33,23000,1000))
+
+# Percentage of workclasses with income <50K and >=50K:
+prop.table(table(adult$maritalstatus, adult$income), margin = 1)*100
+```
+
+--- Explore occupation
+```{r}
+
+summary(adult$occupation)
+
+ggplot(adult, aes(x = adult$occupation, fill = adult$income)) +
+  geom_bar(position = "stack",na.rm = FALSE) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "Income", 
+       y = "Number of people",
+       fill = "Income") +
+  ggtitle("Income grouped by workclass") +   
+  scale_y_continuous(breaks = seq(0,7000,500))
+
+# Percentage of occupation categories with income <50K and >=50K:
+prop.table(table(adult$occupation, adult$income), margin = 1)*100
+```
+
+
