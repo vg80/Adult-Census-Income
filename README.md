@@ -1,5 +1,6 @@
 # Adult-Census-Income
 Data Loading, since some of the data values are marked with "?", so we are choosing na.strings = "?"
+```{r}
 adult1 = read.table("adult1.txt", sep = ",",header = FALSE, strip.white = TRUE, na.strings = "?", stringsAsFactors = TRUE)
 adult2 = read.table("adult2.txt", sep = ",",header = FALSE, strip.white = TRUE, na.strings = "?", stringsAsFactors = TRUE)
 adult = rbind (adult1,adult2)
@@ -113,9 +114,9 @@ This variable may be removed from the data set due to no impact on income variab
 ```{r}
 #Wilcox test
 wilcox.test(fnlwgt~income, adult)
-```
-# p value is greater than 0.05, therefore we cannot reject the null hypothesis. We will accept the null hypothesis. So there is no difference between the means of two distributins. There is no much information in this set.
 
+# p value is greater than 0.05, therefore we cannot reject the null hypothesis. We will accept the null hypothesis. So there is no difference between the means of two distributins. There is no much information in this set.
+```
 
 --Explore Capital gain and Capital loss
 ```{r}
