@@ -1,20 +1,14 @@
 # Adult-Census-Income
 Data Loading, since some of the data values are marked with "?", so we are choosing na.strings = "?"
-```{r}
-
-setwd("C:/Users/rinavi/Desktop/Vidhu Work Docs/Capstone")
-getwd()
 adult1 = read.table("adult1.txt", sep = ",",header = FALSE, strip.white = TRUE, na.strings = "?", stringsAsFactors = TRUE)
 adult2 = read.table("adult2.txt", sep = ",",header = FALSE, strip.white = TRUE, na.strings = "?", stringsAsFactors = TRUE)
 adult = rbind (adult1,adult2)
 
 colnames(adult)=c("age", "workclass", "fnlwgt","education","educationnum", "maritalstatus","occupation", "relationship", "race", "sex","capitalgain", "capitalloss","hoursperweek","nativecountry", "income")
 
+
 head(adult)
 str(adult)
-```
-Check the class balance of the data
-```{r}
 
 unique(adult$income)
 # lets fix the levels <=50K. and >50K. to <=50K and >50K
@@ -23,6 +17,13 @@ adult$income = as.character(adult$income)
 adult$income = with(adult, replace(income, income==">50K.", ">50K"))
 adult$income = with(adult, replace(income, income=="<=50K.", "<=50K"))
 adult$income = as.factor(adult$income)
+
+# deleting 52 duplicate rows.
+adult = adult[!duplicated(adult),]
+```
+Check the class balance of the data and  clean the attribute income.
+```{r}
+
 table(adult$income)
 
 ```
@@ -43,11 +44,12 @@ print(paste (colnames(adult)[i],s))
 
 ```{r}
 # lets find the number of rows containing the missing values. To do that I will use the function complete.cases.
-table (complete.cases (adult))
 incompletecases= adult[which(complete.cases(adult)==FALSE),]
 table(incompletecases$income)
+nrow(incompletecases[is.na(incompletecases$workclass) & is.na(incompletecases$occupation),])
+incompletecases[!is.na(incompletecases$workclass) & is.na(incompletecases$occupation),]
 ```
-It means that most of the data points having missing values belong to the higher class.
+It means that most of the data points having missing values belong to the higher class. we see that missing values in workclass has missing in occupation too. After carefully observing I find that, the values which are missing in occupation but not in workclass, are the ones which are never-worked. It totally make sense. But these values have non zero working hours, which seems ambiguity, but lets leave as it is for now.
 
 
 --- Explore Age
@@ -62,7 +64,7 @@ hist(adult$age)
 boxplot.stats(adult$age)$out
 ```
 
-age is skewed to right because of the presence of outliers, but this is completely natural.
+age is skewed to right because of the presence of outliers, but the outliers are completely natural. These outliers are mild that is they lie below the upper outer fence.
 
 ```{r}
 library(ggplot2)
@@ -103,14 +105,17 @@ ggplot(aes(x = income, y = fnlwgt), data = adult) + geom_boxplot() +
   stat_summary(fun.y = mean, geom = "point", col = "blue") +
     ylab("fnlwgt") +  xlab("Income") +  
   ggtitle("Box Plot of fnlwgt by Income") 
-
+ggplot(adult, aes(fnlwgt,color= income)) + geom_density()
 ```
 It seems that both distributons are similar.
 lets run chi square test to make sure.
+This variable may be removed from the data set due to no impact on income variable.
 ```{r}
-chisq.test(table(adult$sex, adult$income))
+#Wilcox test
+wilcox.test(fnlwgt~income, adult)
 ```
-This variable is removed from the data set due to no impact on income variable.
+# p value is greater than 0.05, therefore we cannot reject the null hypothesis. We will accept the null hypothesis. So there is no difference between the means of two distributins. There is no much information in this set.
+
 
 --Explore Capital gain and Capital loss
 ```{r}
@@ -118,12 +123,11 @@ library(caret)
 summary(adult$capitalgain)
 
 hist(adult$capitalgain)
-#boxplot.stats(Adult$capitalgain)$out
-
-boxplot(capitalgain~income, adult)
+boxplot.stats(adult$capitalgain)$out
 sum(adult$capitalgain==0)
 #since 91% are zeroes letus check variance
 nearZeroVar (adult$capitalgain, saveMetrics = TRUE)
+
 #looking at the statistics of this variable, I descide to bin this variable.
 ```
 
@@ -193,7 +197,14 @@ hist(adult$hoursperweek[adult$income==">50K"], xlm = c(0,100), xlab = "hoursperw
 ```
 
 
-The vriable has many outliers. 
+The variable has many outliers.(Almost 25% of data). Do to deal with it we need to discritize this variable.
+```{r}
+adult <- mutate(adult,
+        hoursperweek_cat = ifelse(adult$hoursperweek < 20, "verylow",                     ifelse(adult$hoursperweek >=20 & adult$hoursperweek <40, "low",
+        ifelse(adult$hoursperweek >= 40 & adult$hoursperweek < 60, "average", ifelse(adult$hoursperweek >= 60 & adult$hoursperweek < 80, "high", "veryhigh" )))))
+adult$hoursperweek_cat = as.factor(adult$hoursperweek_cat)
+
+```
 
 
 ---Explore sex
@@ -278,6 +289,85 @@ ggplot(adult, aes(x = adult$occupation, fill = adult$income)) +
 
 # Percentage of occupation categories with income <50K and >=50K:
 prop.table(table(adult$occupation, adult$income), margin = 1)*100
+```
+
+
+
+--- Explore relationship
+```{r}
+
+summary(adult$relationship)
+
+ggplot(adult, aes(x = adult$relationship, fill = adult$income)) +
+  geom_bar(position = "stack",na.rm = FALSE) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "Income", 
+       y = "Number of people",
+       fill = "Income") +
+  ggtitle("Income grouped by relationship") +   
+  scale_y_continuous(breaks = seq(0,20000,1000))
+
+# Percentage of occupation categories with income <50K and >=50K:
+prop.table(table(adult$relationship, adult$income), margin = 1)*100
+```
+
+
+Lets check whether a relation is assigned according to marital status.
+
+```{r}
+table(adult$relationship, adult$maritalstatus)
+
+```
+Here the data contains 23 rows with relationship "Not in family" but marital status as "married civ spouse".
+
+---Explore race
+```{r}
+summary(adult$race)
+
+ggplot(adult, aes(x = adult$race, fill = adult$income)) +
+  geom_bar(position = "stack",na.rm = FALSE) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "Income", 
+       y = "Number of people",
+       fill = "Income") +
+  ggtitle("Income grouped by race") +   
+  scale_y_continuous(breaks = seq(100,42000,1000))
+
+# Percentage of occupation categories with income <50K and >=50K:
+prop.table(table(adult$race, adult$income), margin = 1)*100
+
+```
+
+---Explore native region
+```{r}
+summary(adult$nativecountry)
+
+ggplot(adult, aes(x = adult$nativecountry, fill = adult$income)) +
+  geom_bar(position = "stack",na.rm = FALSE) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "Income", 
+       y = "Number of people",
+       fill = "Income") +
+  ggtitle("Income grouped by relationship") +   
+  scale_y_continuous(breaks = seq(0,20000,1000))
+
+# Percentage of occupation categories with income <50K and >=50K:
+prop.table(table(adult$nativecountry, adult$income), margin = 1)*100
+```
+
+--- explore education and education num
+
+```{r}
+# first see relationship between them
+table(adult$education, adult$educationnum)
+```
+
+This table justifies the fact that education num is just the number assigned to the levels of education.
+We can delete one of these variable.
+```{r}
+table(adult$education)
+
+
 ```
 
 
