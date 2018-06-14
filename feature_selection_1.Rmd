@@ -3,6 +3,18 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+
+```{r}
+Adult= adult
+Adult$capitalgain = NULL
+Adult$capitalloss = NULL
+Adult$fnlwgt = NULL
+Adult$hoursperweek = NULL
+
+```
+
+
+
 ```{r}
 
 N= nearZeroVar(Adult_dummy_del)
