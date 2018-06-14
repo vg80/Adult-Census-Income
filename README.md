@@ -372,3 +372,12 @@ table(adult$education)
 ```
 
 
+
+```{r}
+Adult= adult
+Adult$capitalgain = NULL
+Adult$capitalloss = NULL
+Adult$fnlwgt = NULL
+Adult$hoursperweek = NULL
+
+```
