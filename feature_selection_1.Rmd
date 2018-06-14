@@ -13,6 +13,13 @@ Adult$hoursperweek = NULL
 
 ```
 
+```{r}
+library(dummy)
+Adult_dummy = dummy(Adult, int = TRUE)
+
+Adult_dummy = cbind(Adult_dummy, Adult$age)
+Adult_dummy_del = Adult_dummy[which(complete.cases(Adult_dummy)==TRUE),]
+```
 
 
 ```{r}

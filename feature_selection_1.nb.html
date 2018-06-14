@@ -174,22 +174,26 @@ $(document).ready(function () {
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuQWR1bHQ9IGFkdWx0XG5BZHVsdCRjYXBpdGFsZ2FpbiA9IE5VTExcbkFkdWx0JGNhcGl0YWxsb3NzID0gTlVMTFxuQWR1bHQkZm5sd2d0ID0gTlVMTFxuQWR1bHQkaG91cnNwZXJ3ZWVrID0gTlVMTFxuXG5gYGAifQ== -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuQWR1bHQ9IGFkdWx0XG5BZHVsdCRjYXBpdGFsZ2FpbiA9IE5VTExcbkFkdWx0JGNhcGl0YWxsb3NzID0gTlVMTFxuQWR1bHQkZm5sd2d0ID0gTlVMTFxuQWR1bHQkaG91cnNwZXJ3ZWVrID0gTlVMTFxuYGBgIn0= -->
 <pre class="r"><code>Adult= adult
 Adult$capitalgain = NULL
 Adult$capitalloss = NULL
 Adult$fnlwgt = NULL
-Adult$hoursperweek = NULL
-</code></pre>
+Adult$hoursperweek = NULL</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShkdW1teSlcbkFkdWx0X2R1bW15ID0gZHVtbXkoQWR1bHQsIGludCA9IFRSVUUpXG5cbkFkdWx0X2R1bW15ID0gY2JpbmQoQWR1bHRfZHVtbXksIEFkdWx0JGFnZSlcbkFkdWx0X2R1bW15X2RlbCA9IEFkdWx0X2R1bW15W3doaWNoKGNvbXBsZXRlLmNhc2VzKEFkdWx0X2R1bW15KT09VFJVRSksXVxuYGBgIn0= -->
-<pre class="r"><code>library(dummy)
-Adult_dummy = dummy(Adult, int = TRUE)
-
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShkdW1teSlcbmBgYCJ9 -->
+<pre class="r"><code>library(dummy)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiZHVtbXkgMC4xLjNcbmR1bW15TmV3cygpXG4ifQ== -->
+<pre><code>dummy 0.1.3
+dummyNews()</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuQWR1bHRfZHVtbXkgPSBkdW1teShBZHVsdCwgaW50ID0gVFJVRSlcbkFkdWx0X2R1bW15ID0gY2JpbmQoQWR1bHRfZHVtbXksIEFkdWx0JGFnZSlcbkFkdWx0X2R1bW15X2RlbCA9IEFkdWx0X2R1bW15W3doaWNoKGNvbXBsZXRlLmNhc2VzKEFkdWx0X2R1bW15KT09VFJVRSksXVxuYGBgIn0= -->
+<pre class="r"><code>Adult_dummy = dummy(Adult, int = TRUE)
 Adult_dummy = cbind(Adult_dummy, Adult$age)
 Adult_dummy_del = Adult_dummy[which(complete.cases(Adult_dummy)==TRUE),]</code></pre>
 <!-- rnb-source-end -->
