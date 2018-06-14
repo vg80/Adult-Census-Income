@@ -1,0 +1,78 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+
+N= nearZeroVar(Adult_dummy_del)
+Adult_dummy_del = Adult_dummy_del[,-N]
+dim(Adult_dummy_del)
+colnames(Adult_dummy_del)
+```
+
+
+```{r}
+# calculate correlation matrix
+correlationMatrix = cor(Adult_dummy_del)
+# summarize the correlation matrix
+print(correlationMatrix)
+# find attributes that are highly corrected (ideally >0.75)
+highlyCorrelated = findCorrelation(correlationMatrix, cutoff=0.8)
+# print indexes of highly correlated attributes
+print(highlyCorrelated)
+colnames(Adult_dummy_del[,highlyCorrelated])
+```
+```{r}
+Adult_dummy_del =  Adult_dummy_del[,-highlyCorrelated]
+colnames(Adult_dummy_del)[colnames(Adult_dummy_del)=="income_.50K"] = "income"
+Adult_dummy_del$income = as.factor(Adult_dummy_del$income)
+findLinearCombos(Adult_dummy_del)
+
+```
+
+```{r}
+set.seed(7)
+Set =Adult_dummy_del
+
+# define the control using a random forest selection function
+control <- rfeControl(functions=rfFuncs, method="cv", number=5)
+# run the RFE algorithm
+results <- rfe(Set[,c(1:25,27:31)], Set[,26], sizes=c(1:25,27:31), rfeControl=control)
+# summarize the results
+print(results)
+# list the chosen features
+predictors(results)
+# plot the results
+plot(results, type=c("g", "o"))
+
+```
+
+
+```{r}
+library(caret)
+Data = Adult_dummy
+train.index <- createDataPartition(Data$income, p = .75, list = FALSE)
+train = Data[ train.index,]
+test  = Data[-train.index,]
+train_del = train[which(complete.cases(train)==TRUE),]
+test_del = test[which(complete.cases(test)==TRUE),]
+```
+
+Descision Tree
+```{r}
+library(rpart)
+x <- cbind(train,y_train)
+# grow tree 
+fit <- rpart(y_train ~ ., data = x,method="class")
+summary(fit)
+#Predict Output 
+predicted= predict(fit,x_test)
+trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
+set.seed(3333)
+dtree_fit <- train(V7 ~., data = training, method = "rpart",
+                   parms = list(split = "information"),
+                   trControl=trctrl,
+                   tuneLength = 10)
+
+```
