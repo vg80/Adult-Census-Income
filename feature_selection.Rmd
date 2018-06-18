@@ -1,0 +1,49 @@
+---
+title: "Untitled"
+author: "vidhu"
+date: "May 30, 2018"
+output: html_document
+---
+
+FEATURE SELECTION ON adult_delmissing DATA.
+```{r}
+# load the library
+library(mlbench)
+library(caret)
+```
+
+
+```{r}
+Adult= adult
+Adult$capitalgain = NULL
+Adult$capitalloss = NULL
+Adult$fnlwgt = NULL
+Adult$hoursperweek = NULL
+
+```
+
+```{r}
+set.seed(7)
+Set = Adult[which(complete.cases(Adult)==TRUE),]
+
+# define the control using a random forest selection function
+control <- rfeControl(functions=rfFuncs, method="cv", number=5)
+# run the RFE algorithm
+results <- rfe(Set[,c(1:10,12:14)], Set[,11], sizes=c(1:10,12:14), rfeControl=control)
+# summarize the results
+print(results)
+# list the chosen features
+predictors(results)
+# plot the results
+plot(results, type=c("g", "o"))
+
+```
+
+Since native country and race are of no importance. So removing them too.
+
+```{r}
+Adult$nativecountry = NULL
+Adult$race = NULL
+Adult$age = (Adult$age - min(Adult$age))/(max(Adult$age)-min(Adult$age))
+```
+
