@@ -37,8 +37,7 @@ table(adult$income)
 
 ```
 
-Its an imbalance data. I will handle this imbalanced data with two techniques oversampling and undersampling and then compare the result of the classifier
-
+Its an imbalance data. 
 
 Lets check the missing values.
 ```{r}
@@ -58,7 +57,11 @@ table(incompletecases$income)
 nrow(incompletecases[is.na(incompletecases$workclass) & is.na(incompletecases$occupation),])
 incompletecases[!is.na(incompletecases$workclass) & is.na(incompletecases$occupation),]
 ```
-It means that most of the data points having missing values belong to the higher class. we see that missing values in workclass has missing in occupation too. After carefully observing I find that, the values which are missing in occupation but not in workclass, are the ones which are never-worked. It totally make sense. But these values have non zero working hours, which seems ambiguity, but lets leave as it is for now.
+It means that most of the data points having missing values belong to the higher class. we see that missing values in workclass has missing in occupation too. After carefully observing I find that, the values which are missing in occupation but not in workclass, are the ones which are Never-worked. It totally make sense. But these values have non zero working hours, which seems ambiguity. Lets delete them.
+```{r}
+adult = adult[-which(adult$workclass =="Never-worked"),]
+
+```
 
 
 --- Explore Age
@@ -142,7 +145,7 @@ Let's see its relation with the income
 ```{r}
 ggplot(adult, aes(capitalgain,color= income)) + geom_density()
 ```
-Here, we see some relationship with income. People with higher capitalgain has higher income. So dropping this variable from data is not 
+Here, we see some relationship with income. People with higher capitalgain has higher income. So dropping this variable from data is not a good idea at this stage.
 ```{r}
 library(dplyr)
 A =adult[adult$capitalgain !=0,]
