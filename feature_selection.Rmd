@@ -5,20 +5,22 @@ date: "May 30, 2018"
 output: html_document
 ---
 
-FEATURE SELECTION ON adult_delmissing DATA.
+FEATURE SELECTION 
+
 ```{r}
 # load the library
 library(mlbench)
 library(caret)
 ```
 
-
 ```{r}
 Adult= adult
 Adult$capitalgain = NULL
 Adult$capitalloss = NULL
 Adult$fnlwgt = NULL
+Adult$educationnum = NULL
 Adult$hoursperweek = NULL
+
 
 ```
 
@@ -29,7 +31,7 @@ Set = Adult[which(complete.cases(Adult)==TRUE),]
 # define the control using a random forest selection function
 control <- rfeControl(functions=rfFuncs, method="cv", number=5)
 # run the RFE algorithm
-results <- rfe(Set[,c(1:10,12:14)], Set[,11], sizes=c(1:10,12:14), rfeControl=control)
+results <- rfe(Set[,c(1:9,11:13)], Set[,10], sizes=c(1:9,11:13), rfeControl=control)
 # summarize the results
 print(results)
 # list the chosen features
@@ -39,11 +41,33 @@ plot(results, type=c("g", "o"))
 
 ```
 
-Since native country and race are of no importance. So removing them too.
+
 
 ```{r}
-Adult$nativecountry = NULL
-Adult$race = NULL
-Adult$age = (Adult$age - min(Adult$age))/(max(Adult$age)-min(Adult$age))
+dmy <- dummyVars(" ~ .", data = Adult,fullRank = T)
+Adult_dummy <- data.frame(predict(dmy, newdata = Adult))
+
+#Converting the dependent variable back to categorical
+Adult_dummy$income..50K<-as.factor(Adult_dummy$income..50K)
+#deleting neverworked column
+Adult_dummy$workclass.Never.worked= NULL
+#deleting missing values
+Adult_dummy_del = Adult_dummy[which(complete.cases(Adult_dummy)==TRUE),]
 ```
+
+```{r}
+#Feature selection using rfe in caret
+control <- rfeControl(functions = rfFuncs,
+                   method = "repeatedcv",
+                   repeats = 3,
+                   verbose = FALSE)
+outcomeName<-'income..50K'
+predictors<-names(Adult_dummy_del)[!names(Adult_dummy_del) %in% outcomeName]
+result2 <- rfe(trainSet[,predictors], trainSet[,outcomeName],
+                      rfeControl = control)
+```
+
+
+
+
 
