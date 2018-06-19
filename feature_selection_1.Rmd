@@ -2,51 +2,46 @@
 title: "R Notebook"
 output: html_notebook
 ---
-
-
 ```{r}
-Adult= adult
-Adult$capitalgain = NULL
-Adult$capitalloss = NULL
-Adult$fnlwgt = NULL
-Adult$hoursperweek = NULL
 
-```
-
-```{r}
-library(dummy)
-Adult_dummy = dummy(Adult, int = TRUE)
-
-Adult_dummy = cbind(Adult_dummy, Adult$age)
-Adult_dummy_del = Adult_dummy[which(complete.cases(Adult_dummy)==TRUE),]
+library(FSelector)
 ```
 
 
+
 ```{r}
 
-N= nearZeroVar(Adult_dummy_del)
+N= nearZeroVar(Adult_dummy_del[,-which(names(Adult_dummy_del)=="income..50K")], saveMetrics = TRUE)
+# lets find information gain of attributes
+M = information.gain(income..50K~., Adult_dummy_del)
+#checking 
+rownames(N)==rownames(M)
+Z = cbind(N,M)
+Z1 = Z[which( Z$attr_importance == 0),] 
+name = names(Adult_dummy_del)[!names(Adult_dummy_del) %in% rownames(Z1)]
+dummy_del = Adult_dummy_del[,name]
+
+```
+
 Adult_dummy_del = Adult_dummy_del[,-N]
 dim(Adult_dummy_del)
 colnames(Adult_dummy_del)
-```
 
 
 ```{r}
 # calculate correlation matrix
-correlationMatrix = cor(Adult_dummy_del)
+correlationMatrix = cor(dummy_del[,-which(names(dummy_del)=="income..50K")])
 # summarize the correlation matrix
 print(correlationMatrix)
 # find attributes that are highly corrected (ideally >0.75)
 highlyCorrelated = findCorrelation(correlationMatrix, cutoff=0.8)
 # print indexes of highly correlated attributes
 print(highlyCorrelated)
-colnames(Adult_dummy_del[,highlyCorrelated])
+colnames(dummy_del[,highlyCorrelated])
 ```
 ```{r}
-Adult_dummy_del =  Adult_dummy_del[,-highlyCorrelated]
-colnames(Adult_dummy_del)[colnames(Adult_dummy_del)=="income_.50K"] = "income"
-Adult_dummy_del$income = as.factor(Adult_dummy_del$income)
-findLinearCombos(Adult_dummy_del)
+
+colnames(dummy_del)[colnames(dummy_del)=="income..50K"] = "income"
 
 ```
 
@@ -57,7 +52,7 @@ Set =Adult_dummy_del
 # define the control using a random forest selection function
 control <- rfeControl(functions=rfFuncs, method="cv", number=5)
 # run the RFE algorithm
-results <- rfe(Set[,c(1:25,27:31)], Set[,26], sizes=c(1:25,27:31), rfeControl=control)
+results <- rfe(Set[,c(1:43,45:53)], Set[,44], sizes=c(1:43,45:53), rfeControl=control)
 # summarize the results
 print(results)
 # list the chosen features
