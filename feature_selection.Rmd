@@ -11,6 +11,7 @@ FEATURE SELECTION
 # load the library
 library(mlbench)
 library(caret)
+library(RANN)
 ```
 
 ```{r}
@@ -20,7 +21,8 @@ Adult$capitalloss = NULL
 Adult$fnlwgt = NULL
 Adult$educationnum = NULL
 Adult$hoursperweek = NULL
-
+preProcValues = preProcess(Adult, method = c("center","scale"), na.remove = TRUE)
+Adult <- predict(preProcValues, Adult)
 
 ```
 
@@ -32,6 +34,9 @@ Set = Adult[which(complete.cases(Adult)==TRUE),]
 control <- rfeControl(functions=rfFuncs, method="cv", number=5)
 # run the RFE algorithm
 results <- rfe(Set[,c(1:9,11:13)], Set[,10], sizes=c(1:9,11:13), rfeControl=control)
+```
+
+```{r}
 # summarize the results
 print(results)
 # list the chosen features
@@ -54,20 +59,3 @@ Adult_dummy$workclass.Never.worked= NULL
 #deleting missing values
 Adult_dummy_del = Adult_dummy[which(complete.cases(Adult_dummy)==TRUE),]
 ```
-
-```{r}
-#Feature selection using rfe in caret
-control <- rfeControl(functions = rfFuncs,
-                   method = "repeatedcv",
-                   repeats = 3,
-                   verbose = FALSE)
-outcomeName<-'income..50K'
-predictors<-names(Adult_dummy_del)[!names(Adult_dummy_del) %in% outcomeName]
-result2 <- rfe(trainSet[,predictors], trainSet[,outcomeName],
-                      rfeControl = control)
-```
-
-
-
-
-
