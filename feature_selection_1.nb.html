@@ -172,123 +172,76 @@ $(document).ready(function () {
 
 
 <!-- rnb-text-begin -->
+<p>FEATURE SELECTION</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuQWR1bHQ9IGFkdWx0XG5BZHVsdCRjYXBpdGFsZ2FpbiA9IE5VTExcbkFkdWx0JGNhcGl0YWxsb3NzID0gTlVMTFxuQWR1bHQkZm5sd2d0ID0gTlVMTFxuQWR1bHQkaG91cnNwZXJ3ZWVrID0gTlVMTFxuYGBgIn0= -->
-<pre class="r"><code>Adult= adult
-Adult$capitalgain = NULL
-Adult$capitalloss = NULL
-Adult$fnlwgt = NULL
-Adult$hoursperweek = NULL</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBsb2FkIHRoZSBsaWJyYXJ5XG5saWJyYXJ5KG1sYmVuY2gpXG5saWJyYXJ5KGNhcmV0KVxubGlicmFyeShSQU5OKVxuYGBgIn0= -->
+<pre class="r"><code># load the library
+library(mlbench)
+library(caret)
+library(RANN)</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShkdW1teSlcbmBgYCJ9 -->
-<pre class="r"><code>library(dummy)</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuQWR1bHQ9IGFkdWx0XG5BZHVsdCRjYXBpdGFsZ2FpbiA9IE5VTExcbkFkdWx0JGNhcGl0YWxsb3NzID0gTlVMTFxuQWR1bHQkZm5sd2d0ID0gTlVMTFxuQWR1bHQkZWR1Y2F0aW9ubnVtID0gTlVMTFxuQWR1bHQkaG91cnNwZXJ3ZWVrID0gTlVMTFxucHJlUHJvY1ZhbHVlcyA9IHByZVByb2Nlc3MoQWR1bHQsIG1ldGhvZCA9IGMoXCJjZW50ZXJcIixcInNjYWxlXCIpLCBuYS5yZW1vdmUgPSBUUlVFKVxuQWR1bHQgPC0gcHJlZGljdChwcmVQcm9jVmFsdWVzLCBBZHVsdClcblxuYGBgIn0= -->
+<pre class="r"><code>Adult= adult
+Adult$capitalgain = NULL
+Adult$capitalloss = NULL
+Adult$fnlwgt = NULL
+Adult$educationnum = NULL
+Adult$hoursperweek = NULL
+preProcValues = preProcess(Adult, method = c(&quot;center&quot;,&quot;scale&quot;), na.remove = TRUE)
+Adult &lt;- predict(preProcValues, Adult)
+</code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiZHVtbXkgMC4xLjNcbmR1bW15TmV3cygpXG4ifQ== -->
-<pre><code>dummy 0.1.3
-dummyNews()</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuQWR1bHRfZHVtbXkgPSBkdW1teShBZHVsdCwgaW50ID0gVFJVRSlcbkFkdWx0X2R1bW15ID0gY2JpbmQoQWR1bHRfZHVtbXksIEFkdWx0JGFnZSlcbkFkdWx0X2R1bW15X2RlbCA9IEFkdWx0X2R1bW15W3doaWNoKGNvbXBsZXRlLmNhc2VzKEFkdWx0X2R1bW15KT09VFJVRSksXVxuYGBgIn0= -->
-<pre class="r"><code>Adult_dummy = dummy(Adult, int = TRUE)
-Adult_dummy = cbind(Adult_dummy, Adult$age)
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZG15IDwtIGR1bW15VmFycyhcIiB+IC5cIiwgZGF0YSA9IEFkdWx0LGZ1bGxSYW5rID0gVClcbkFkdWx0X2R1bW15IDwtIGRhdGEuZnJhbWUocHJlZGljdChkbXksIG5ld2RhdGEgPSBBZHVsdCkpXG5cbiNDb252ZXJ0aW5nIHRoZSBkZXBlbmRlbnQgdmFyaWFibGUgYmFjayB0byBjYXRlZ29yaWNhbFxuQWR1bHRfZHVtbXkkaW5jb21lLi41MEs8LWFzLmZhY3RvcihBZHVsdF9kdW1teSRpbmNvbWUuLjUwSylcbiNkZWxldGluZyBuZXZlcndvcmtlZCBjb2x1bW5cbkFkdWx0X2R1bW15JHdvcmtjbGFzcy5OZXZlci53b3JrZWQ9IE5VTExcbiNkZWxldGluZyBtaXNzaW5nIHZhbHVlc1xuQWR1bHRfZHVtbXlfZGVsID0gQWR1bHRfZHVtbXlbd2hpY2goY29tcGxldGUuY2FzZXMoQWR1bHRfZHVtbXkpPT1UUlVFKSxdXG5gYGAifQ== -->
+<pre class="r"><code>dmy &lt;- dummyVars(&quot; ~ .&quot;, data = Adult,fullRank = T)
+Adult_dummy &lt;- data.frame(predict(dmy, newdata = Adult))
+
+#Converting the dependent variable back to categorical
+Adult_dummy$income..50K&lt;-as.factor(Adult_dummy$income..50K)
+#deleting neverworked column
+Adult_dummy$workclass.Never.worked= NULL
+#deleting missing values
 Adult_dummy_del = Adult_dummy[which(complete.cases(Adult_dummy)==TRUE),]</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuXG5OPSBuZWFyWmVyb1ZhcihBZHVsdF9kdW1teV9kZWwpXG5BZHVsdF9kdW1teV9kZWwgPSBBZHVsdF9kdW1teV9kZWxbLC1OXVxuZGltKEFkdWx0X2R1bW15X2RlbClcbmNvbG5hbWVzKEFkdWx0X2R1bW15X2RlbClcbmBgYCJ9 -->
-<pre class="r"><code>
-N= nearZeroVar(Adult_dummy_del)
-Adult_dummy_del = Adult_dummy_del[,-N]
-dim(Adult_dummy_del)
-colnames(Adult_dummy_del)</code></pre>
-<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBjYWxjdWxhdGUgY29ycmVsYXRpb24gbWF0cml4XG5jb3JyZWxhdGlvbk1hdHJpeCA9IGNvcihBZHVsdF9kdW1teV9kZWwpXG4jIHN1bW1hcml6ZSB0aGUgY29ycmVsYXRpb24gbWF0cml4XG5wcmludChjb3JyZWxhdGlvbk1hdHJpeClcbiMgZmluZCBhdHRyaWJ1dGVzIHRoYXQgYXJlIGhpZ2hseSBjb3JyZWN0ZWQgKGlkZWFsbHkgPjAuNzUpXG5oaWdobHlDb3JyZWxhdGVkID0gZmluZENvcnJlbGF0aW9uKGNvcnJlbGF0aW9uTWF0cml4LCBjdXRvZmY9MC44KVxuIyBwcmludCBpbmRleGVzIG9mIGhpZ2hseSBjb3JyZWxhdGVkIGF0dHJpYnV0ZXNcbnByaW50KGhpZ2hseUNvcnJlbGF0ZWQpXG5jb2xuYW1lcyhBZHVsdF9kdW1teV9kZWxbLGhpZ2hseUNvcnJlbGF0ZWRdKVxuYGBgIn0= -->
-<pre class="r"><code># calculate correlation matrix
-correlationMatrix = cor(Adult_dummy_del)
-# summarize the correlation matrix
-print(correlationMatrix)
-# find attributes that are highly corrected (ideally &gt;0.75)
-highlyCorrelated = findCorrelation(correlationMatrix, cutoff=0.8)
-# print indexes of highly correlated attributes
-print(highlyCorrelated)
-colnames(Adult_dummy_del[,highlyCorrelated])</code></pre>
-<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
 <!-- rnb-chunk-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuQWR1bHRfZHVtbXlfZGVsID0gIEFkdWx0X2R1bW15X2RlbFssLWhpZ2hseUNvcnJlbGF0ZWRdXG5jb2xuYW1lcyhBZHVsdF9kdW1teV9kZWwpW2NvbG5hbWVzKEFkdWx0X2R1bW15X2RlbCk9PVwiaW5jb21lXy41MEtcIl0gPSBcImluY29tZVwiXG5BZHVsdF9kdW1teV9kZWwkaW5jb21lID0gYXMuZmFjdG9yKEFkdWx0X2R1bW15X2RlbCRpbmNvbWUpXG5maW5kTGluZWFyQ29tYm9zKEFkdWx0X2R1bW15X2RlbClcblxuYGBgIn0= -->
-<pre class="r"><code>Adult_dummy_del =  Adult_dummy_del[,-highlyCorrelated]
-colnames(Adult_dummy_del)[colnames(Adult_dummy_del)==&quot;income_.50K&quot;] = &quot;income&quot;
-Adult_dummy_del$income = as.factor(Adult_dummy_del$income)
-findLinearCombos(Adult_dummy_del)
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucHJlZGljdG9yc2V0ICA9IHJlc3VsdHMkY29udHJvbCRmdW5jdGlvbnMkc2VsZWN0VmFyKHJlc3VsdHMkdmFyaWFibGVzLCAxMClcblxuYGBgIn0= -->
+<pre class="r"><code>predictorset  = results$control$functions$selectVar(results$variables, 10)
 </code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2V0LnNlZWQoNylcblNldCA9QWR1bHRfZHVtbXlfZGVsXG5cbiMgZGVmaW5lIHRoZSBjb250cm9sIHVzaW5nIGEgcmFuZG9tIGZvcmVzdCBzZWxlY3Rpb24gZnVuY3Rpb25cbmNvbnRyb2wgPC0gcmZlQ29udHJvbChmdW5jdGlvbnM9cmZGdW5jcywgbWV0aG9kPVwiY3ZcIiwgbnVtYmVyPTUpXG4jIHJ1biB0aGUgUkZFIGFsZ29yaXRobVxucmVzdWx0cyA8LSByZmUoU2V0WyxjKDE6MjUsMjc6MzEpXSwgU2V0WywyNl0sIHNpemVzPWMoMToyNSwyNzozMSksIHJmZUNvbnRyb2w9Y29udHJvbClcbiMgc3VtbWFyaXplIHRoZSByZXN1bHRzXG5wcmludChyZXN1bHRzKVxuIyBsaXN0IHRoZSBjaG9zZW4gZmVhdHVyZXNcbnByZWRpY3RvcnMocmVzdWx0cylcbiMgcGxvdCB0aGUgcmVzdWx0c1xucGxvdChyZXN1bHRzLCB0eXBlPWMoXCJnXCIsIFwib1wiKSlcblxuYGBgIn0= -->
-<pre class="r"><code>set.seed(7)
-Set =Adult_dummy_del
 
-# define the control using a random forest selection function
-control &lt;- rfeControl(functions=rfFuncs, method=&quot;cv&quot;, number=5)
-# run the RFE algorithm
-results &lt;- rfe(Set[,c(1:25,27:31)], Set[,26], sizes=c(1:25,27:31), rfeControl=control)
-# summarize the results
-print(results)
-# list the chosen features
-predictors(results)
-# plot the results
-plot(results, type=c(&quot;g&quot;, &quot;o&quot;))
-</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShjYXJldClcbkRhdGEgPSBBZHVsdF9kdW1teVxudHJhaW4uaW5kZXggPC0gY3JlYXRlRGF0YVBhcnRpdGlvbihEYXRhJGluY29tZSwgcCA9IC43NSwgbGlzdCA9IEZBTFNFKVxudHJhaW4gPSBEYXRhWyB0cmFpbi5pbmRleCxdXG50ZXN0ICA9IERhdGFbLXRyYWluLmluZGV4LF1cbnRyYWluX2RlbCA9IHRyYWluW3doaWNoKGNvbXBsZXRlLmNhc2VzKHRyYWluKT09VFJVRSksXVxudGVzdF9kZWwgPSB0ZXN0W3doaWNoKGNvbXBsZXRlLmNhc2VzKHRlc3QpPT1UUlVFKSxdXG5gYGAifQ== -->
-<pre class="r"><code>library(caret)
-Data = Adult_dummy
-train.index &lt;- createDataPartition(Data$income, p = .75, list = FALSE)
-train = Data[ train.index,]
-test  = Data[-train.index,]
-train_del = train[which(complete.cases(train)==TRUE),]
-test_del = test[which(complete.cases(test)==TRUE),]</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<p>Descision Tree</p>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShycGFydClcbnggPC0gY2JpbmQodHJhaW4seV90cmFpbilcbiMgZ3JvdyB0cmVlIFxuZml0IDwtIHJwYXJ0KHlfdHJhaW4gfiAuLCBkYXRhID0geCxtZXRob2Q9XCJjbGFzc1wiKVxuc3VtbWFyeShmaXQpXG4jUHJlZGljdCBPdXRwdXQgXG5wcmVkaWN0ZWQ9IHByZWRpY3QoZml0LHhfdGVzdClcbnRyY3RybCA8LSB0cmFpbkNvbnRyb2wobWV0aG9kID0gXCJyZXBlYXRlZGN2XCIsIG51bWJlciA9IDEwLCByZXBlYXRzID0gMylcbnNldC5zZWVkKDMzMzMpXG5kdHJlZV9maXQgPC0gdHJhaW4oVjcgfi4sIGRhdGEgPSB0cmFpbmluZywgbWV0aG9kID0gXCJycGFydFwiLFxuICAgICAgICAgICAgICAgICAgIHBhcm1zID0gbGlzdChzcGxpdCA9IFwiaW5mb3JtYXRpb25cIiksXG4gICAgICAgICAgICAgICAgICAgdHJDb250cm9sPXRyY3RybCxcbiAgICAgICAgICAgICAgICAgICB0dW5lTGVuZ3RoID0gMTApXG5cbmBgYCJ9 -->
-<pre class="r"><code>library(rpart)
-x &lt;- cbind(train,y_train)
-# grow tree 
-fit &lt;- rpart(y_train ~ ., data = x,method=&quot;class&quot;)
-summary(fit)
-#Predict Output 
-predicted= predict(fit,x_test)
-trctrl &lt;- trainControl(method = &quot;repeatedcv&quot;, number = 10, repeats = 3)
-set.seed(3333)
-dtree_fit &lt;- train(V7 ~., data = training, method = &quot;rpart&quot;,
-                   parms = list(split = &quot;information&quot;),
-                   trControl=trctrl,
-                   tuneLength = 10)
-</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCi0tLQ0KDQoNCmBgYHtyfQ0KQWR1bHQ9IGFkdWx0DQpBZHVsdCRjYXBpdGFsZ2FpbiA9IE5VTEwNCkFkdWx0JGNhcGl0YWxsb3NzID0gTlVMTA0KQWR1bHQkZm5sd2d0ID0gTlVMTA0KQWR1bHQkaG91cnNwZXJ3ZWVrID0gTlVMTA0KDQpgYGANCg0KYGBge3J9DQpsaWJyYXJ5KGR1bW15KQ0KQWR1bHRfZHVtbXkgPSBkdW1teShBZHVsdCwgaW50ID0gVFJVRSkNCg0KQWR1bHRfZHVtbXkgPSBjYmluZChBZHVsdF9kdW1teSwgQWR1bHQkYWdlKQ0KQWR1bHRfZHVtbXlfZGVsID0gQWR1bHRfZHVtbXlbd2hpY2goY29tcGxldGUuY2FzZXMoQWR1bHRfZHVtbXkpPT1UUlVFKSxdDQpgYGANCg0KDQpgYGB7cn0NCg0KTj0gbmVhclplcm9WYXIoQWR1bHRfZHVtbXlfZGVsKQ0KQWR1bHRfZHVtbXlfZGVsID0gQWR1bHRfZHVtbXlfZGVsWywtTl0NCmRpbShBZHVsdF9kdW1teV9kZWwpDQpjb2xuYW1lcyhBZHVsdF9kdW1teV9kZWwpDQpgYGANCg0KDQpgYGB7cn0NCiMgY2FsY3VsYXRlIGNvcnJlbGF0aW9uIG1hdHJpeA0KY29ycmVsYXRpb25NYXRyaXggPSBjb3IoQWR1bHRfZHVtbXlfZGVsKQ0KIyBzdW1tYXJpemUgdGhlIGNvcnJlbGF0aW9uIG1hdHJpeA0KcHJpbnQoY29ycmVsYXRpb25NYXRyaXgpDQojIGZpbmQgYXR0cmlidXRlcyB0aGF0IGFyZSBoaWdobHkgY29ycmVjdGVkIChpZGVhbGx5ID4wLjc1KQ0KaGlnaGx5Q29ycmVsYXRlZCA9IGZpbmRDb3JyZWxhdGlvbihjb3JyZWxhdGlvbk1hdHJpeCwgY3V0b2ZmPTAuOCkNCiMgcHJpbnQgaW5kZXhlcyBvZiBoaWdobHkgY29ycmVsYXRlZCBhdHRyaWJ1dGVzDQpwcmludChoaWdobHlDb3JyZWxhdGVkKQ0KY29sbmFtZXMoQWR1bHRfZHVtbXlfZGVsWyxoaWdobHlDb3JyZWxhdGVkXSkNCmBgYA0KYGBge3J9DQpBZHVsdF9kdW1teV9kZWwgPSAgQWR1bHRfZHVtbXlfZGVsWywtaGlnaGx5Q29ycmVsYXRlZF0NCmNvbG5hbWVzKEFkdWx0X2R1bW15X2RlbClbY29sbmFtZXMoQWR1bHRfZHVtbXlfZGVsKT09ImluY29tZV8uNTBLIl0gPSAiaW5jb21lIg0KQWR1bHRfZHVtbXlfZGVsJGluY29tZSA9IGFzLmZhY3RvcihBZHVsdF9kdW1teV9kZWwkaW5jb21lKQ0KZmluZExpbmVhckNvbWJvcyhBZHVsdF9kdW1teV9kZWwpDQoNCmBgYA0KDQpgYGB7cn0NCnNldC5zZWVkKDcpDQpTZXQgPUFkdWx0X2R1bW15X2RlbA0KDQojIGRlZmluZSB0aGUgY29udHJvbCB1c2luZyBhIHJhbmRvbSBmb3Jlc3Qgc2VsZWN0aW9uIGZ1bmN0aW9uDQpjb250cm9sIDwtIHJmZUNvbnRyb2woZnVuY3Rpb25zPXJmRnVuY3MsIG1ldGhvZD0iY3YiLCBudW1iZXI9NSkNCiMgcnVuIHRoZSBSRkUgYWxnb3JpdGhtDQpyZXN1bHRzIDwtIHJmZShTZXRbLGMoMToyNSwyNzozMSldLCBTZXRbLDI2XSwgc2l6ZXM9YygxOjI1LDI3OjMxKSwgcmZlQ29udHJvbD1jb250cm9sKQ0KIyBzdW1tYXJpemUgdGhlIHJlc3VsdHMNCnByaW50KHJlc3VsdHMpDQojIGxpc3QgdGhlIGNob3NlbiBmZWF0dXJlcw0KcHJlZGljdG9ycyhyZXN1bHRzKQ0KIyBwbG90IHRoZSByZXN1bHRzDQpwbG90KHJlc3VsdHMsIHR5cGU9YygiZyIsICJvIikpDQoNCmBgYA0KDQoNCmBgYHtyfQ0KbGlicmFyeShjYXJldCkNCkRhdGEgPSBBZHVsdF9kdW1teQ0KdHJhaW4uaW5kZXggPC0gY3JlYXRlRGF0YVBhcnRpdGlvbihEYXRhJGluY29tZSwgcCA9IC43NSwgbGlzdCA9IEZBTFNFKQ0KdHJhaW4gPSBEYXRhWyB0cmFpbi5pbmRleCxdDQp0ZXN0ICA9IERhdGFbLXRyYWluLmluZGV4LF0NCnRyYWluX2RlbCA9IHRyYWluW3doaWNoKGNvbXBsZXRlLmNhc2VzKHRyYWluKT09VFJVRSksXQ0KdGVzdF9kZWwgPSB0ZXN0W3doaWNoKGNvbXBsZXRlLmNhc2VzKHRlc3QpPT1UUlVFKSxdDQpgYGANCg0KRGVzY2lzaW9uIFRyZWUNCmBgYHtyfQ0KbGlicmFyeShycGFydCkNCnggPC0gY2JpbmQodHJhaW4seV90cmFpbikNCiMgZ3JvdyB0cmVlIA0KZml0IDwtIHJwYXJ0KHlfdHJhaW4gfiAuLCBkYXRhID0geCxtZXRob2Q9ImNsYXNzIikNCnN1bW1hcnkoZml0KQ0KI1ByZWRpY3QgT3V0cHV0IA0KcHJlZGljdGVkPSBwcmVkaWN0KGZpdCx4X3Rlc3QpDQp0cmN0cmwgPC0gdHJhaW5Db250cm9sKG1ldGhvZCA9ICJyZXBlYXRlZGN2IiwgbnVtYmVyID0gMTAsIHJlcGVhdHMgPSAzKQ0Kc2V0LnNlZWQoMzMzMykNCmR0cmVlX2ZpdCA8LSB0cmFpbihWNyB+LiwgZGF0YSA9IHRyYWluaW5nLCBtZXRob2QgPSAicnBhcnQiLA0KICAgICAgICAgICAgICAgICAgIHBhcm1zID0gbGlzdChzcGxpdCA9ICJpbmZvcm1hdGlvbiIpLA0KICAgICAgICAgICAgICAgICAgIHRyQ29udHJvbD10cmN0cmwsDQogICAgICAgICAgICAgICAgICAgdHVuZUxlbmd0aCA9IDEwKQ0KDQpgYGA=</div>
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCi0tLQ0KRkVBVFVSRSBTRUxFQ1RJT04gDQoNCmBgYHtyfQ0KIyBsb2FkIHRoZSBsaWJyYXJ5DQpsaWJyYXJ5KG1sYmVuY2gpDQpsaWJyYXJ5KGNhcmV0KQ0KbGlicmFyeShSQU5OKQ0KYGBgDQoNCmBgYHtyfQ0KQWR1bHQ9IGFkdWx0DQpBZHVsdCRjYXBpdGFsZ2FpbiA9IE5VTEwNCkFkdWx0JGNhcGl0YWxsb3NzID0gTlVMTA0KQWR1bHQkZm5sd2d0ID0gTlVMTA0KQWR1bHQkZWR1Y2F0aW9ubnVtID0gTlVMTA0KQWR1bHQkaG91cnNwZXJ3ZWVrID0gTlVMTA0KcHJlUHJvY1ZhbHVlcyA9IHByZVByb2Nlc3MoQWR1bHQsIG1ldGhvZCA9IGMoImNlbnRlciIsInNjYWxlIiksIG5hLnJlbW92ZSA9IFRSVUUpDQpBZHVsdCA8LSBwcmVkaWN0KHByZVByb2NWYWx1ZXMsIEFkdWx0KQ0KDQpgYGANCg0KYGBge3J9DQpkbXkgPC0gZHVtbXlWYXJzKCIgfiAuIiwgZGF0YSA9IEFkdWx0LGZ1bGxSYW5rID0gVCkNCkFkdWx0X2R1bW15IDwtIGRhdGEuZnJhbWUocHJlZGljdChkbXksIG5ld2RhdGEgPSBBZHVsdCkpDQoNCiNDb252ZXJ0aW5nIHRoZSBkZXBlbmRlbnQgdmFyaWFibGUgYmFjayB0byBjYXRlZ29yaWNhbA0KQWR1bHRfZHVtbXkkaW5jb21lLi41MEs8LWFzLmZhY3RvcihBZHVsdF9kdW1teSRpbmNvbWUuLjUwSykNCiNkZWxldGluZyBuZXZlcndvcmtlZCBjb2x1bW4NCkFkdWx0X2R1bW15JHdvcmtjbGFzcy5OZXZlci53b3JrZWQ9IE5VTEwNCiNkZWxldGluZyBtaXNzaW5nIHZhbHVlcw0KQWR1bHRfZHVtbXlfZGVsID0gQWR1bHRfZHVtbXlbd2hpY2goY29tcGxldGUuY2FzZXMoQWR1bHRfZHVtbXkpPT1UUlVFKSxdDQpgYGANCg0KDQpgYGB7cn0NCg0KbGlicmFyeShGU2VsZWN0b3IpDQpgYGANCg0KDQoNCmBgYHtyfQ0KDQpOPSBuZWFyWmVyb1ZhcihBZHVsdF9kdW1teV9kZWxbLC13aGljaChuYW1lcyhBZHVsdF9kdW1teV9kZWwpPT0iaW5jb21lLi41MEsiKV0sIHNhdmVNZXRyaWNzID0gVFJVRSkNCiMgbGV0cyBmaW5kIGluZm9ybWF0aW9uIGdhaW4gb2YgYXR0cmlidXRlcw0KTSA9IGluZm9ybWF0aW9uLmdhaW4oaW5jb21lLi41MEt+LiwgQWR1bHRfZHVtbXlfZGVsKQ0KI2NoZWNraW5nIA0Kcm93bmFtZXMoTik9PXJvd25hbWVzKE0pDQpaID0gY2JpbmQoTixNKQ0KWjEgPSBaW3doaWNoKCBaJGF0dHJfaW1wb3J0YW5jZSA8PSAwLjAwMzcgJiBaJG56diA9PSBUUlVFICksXSANCm5hbWUgPSBuYW1lcyhBZHVsdF9kdW1teV9kZWwpWyFuYW1lcyhBZHVsdF9kdW1teV9kZWwpICVpbiUgcm93bmFtZXMoWjEpXQ0KQWR1bHRfZHVtbXlfZGVsID0gQWR1bHRfZHVtbXlfZGVsWyxuYW1lXQ0KDQpgYGANCg0KDQoNCg0KYGBge3J9DQojIGNhbGN1bGF0ZSBjb3JyZWxhdGlvbiBtYXRyaXgNCmNvcnJlbGF0aW9uTWF0cml4ID0gY29yKEFkdWx0X2R1bW15X2RlbFssLXdoaWNoKG5hbWVzKEFkdWx0X2R1bW15X2RlbCk9PSJpbmNvbWUuLjUwSyIpXSkNCiMgc3VtbWFyaXplIHRoZSBjb3JyZWxhdGlvbiBtYXRyaXgNCnByaW50KGNvcnJlbGF0aW9uTWF0cml4KQ0KIyBmaW5kIGF0dHJpYnV0ZXMgdGhhdCBhcmUgaGlnaGx5IGNvcnJlY3RlZCAoaWRlYWxseSA+MC43NSkNCmhpZ2hseUNvcnJlbGF0ZWQgPSBmaW5kQ29ycmVsYXRpb24oY29ycmVsYXRpb25NYXRyaXgsIGN1dG9mZj0wLjgpDQojIHByaW50IGluZGV4ZXMgb2YgaGlnaGx5IGNvcnJlbGF0ZWQgYXR0cmlidXRlcw0KcHJpbnQoaGlnaGx5Q29ycmVsYXRlZCkNCmNvbG5hbWVzKGR1bW15X2RlbFssaGlnaGx5Q29ycmVsYXRlZF0pDQpgYGANCmBgYHtyfQ0KDQpjb2xuYW1lcyhBZHVsdF9kdW1teV9kZWwpW2NvbG5hbWVzKEFkdWx0X2R1bW15X2RlbCk9PSJpbmNvbWUuLjUwSyJdID0gImluY29tZSINCg0KYGBgDQoNCmBgYHtyfQ0Kc2V0LnNlZWQoNykNClNldCA9QWR1bHRfZHVtbXlfZGVsDQoNCiMgZGVmaW5lIHRoZSBjb250cm9sIHVzaW5nIGEgcmFuZG9tIGZvcmVzdCBzZWxlY3Rpb24gZnVuY3Rpb24NCmNvbnRyb2wgPC0gcmZlQ29udHJvbChmdW5jdGlvbnM9cmZGdW5jcywgbWV0aG9kPSJjdiIsIG51bWJlcj0zKQ0KIyBydW4gdGhlIFJGRSBhbGdvcml0aG0NCnJlc3VsdHMgPC0gcmZlKFNldFssYygxOjMxLDMzOjM5KV0sIFNldFssMzJdLCBzaXplcz1jKDE6MzEsMzM6MzkpLCByZmVDb250cm9sPWNvbnRyb2wpDQojIHN1bW1hcml6ZSB0aGUgcmVzdWx0cw0KcHJpbnQocmVzdWx0cykNCiMgbGlzdCB0aGUgY2hvc2VuIGZlYXR1cmVzDQpwcmVkaWN0b3JzKHJlc3VsdHMpDQojIHBsb3QgdGhlIHJlc3VsdHMNCnBsb3QocmVzdWx0cywgdHlwZT1jKCJnIiwgIm8iKSkNCg0KYGBgDQoNCmBgYHtyfQ0KcHJlZGljdG9yc2V0ICA9IHJlc3VsdHMkY29udHJvbCRmdW5jdGlvbnMkc2VsZWN0VmFyKHJlc3VsdHMkdmFyaWFibGVzLCAxMCkNCg0KYGBgDQoNCg0KDQo=</div>
 
 
 

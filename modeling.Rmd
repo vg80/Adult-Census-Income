@@ -1,0 +1,34 @@
+---
+title: "Untitled"
+author: "vidhu"
+date: "June 15, 2018"
+output: html_document
+---
+```{r}
+predictorset
+```
+```{r}
+colnames(Adult_dummy_del)[colnames(Adult_dummy_del)=="income..50K"] = "income"
+
+```
+
+```{r}
+set.seed(400)
+ctrl = trainControl(method = "cv", 
+                     number = 10, 
+                     sampling = "smote")
+
+start_time = Sys.time()
+knnFit = train(Adult_dummy_del[,predictorset], Adult_dummy_del[,"income"], method = "knn", trControl = ctrl, tuneLength = 10)
+end_time = Sys.time()
+print(knnFit)
+plot(knnFit)
+```
+
+```{r}
+
+rfFit <- train(income ~ ., data = Adult_dummy_del, method = "rf", trControl = ctrl, tuneLength = 10, metric = "ROC")
+print(rfFit)
+plot(rfFit)
+
+```
