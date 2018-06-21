@@ -1,4 +1,5 @@
----
+
+--
 title: "Untitled"
 author: "vidhu"
 date: "June 15, 2018"
@@ -31,10 +32,6 @@ varImp(knnFit)
 plot(varImp(knnFit), main = "variable importance knn")
 ```
 
-```{r}
-library(pROC)
-
-```
 
 ```{r}
 ctrl = trainControl(method = "cv", 
@@ -43,8 +40,8 @@ ctrl = trainControl(method = "cv",
                      summaryFunction= twoClassSummary, 
                      classProbs=T,
                      savePredictions = T)
-grid <- expand.grid(mtry = seq(2,10,2), ntree = c(700, 1000,2000) )
-rfFit = train(Adult_dummy_del[,predictorset], Adult_dummy_del[,"income"], method = "rf", trControl = ctrl, metric = "ROC", tuneLength = 10)
+levels(Adult_dummy_del$income) =      make.names(levels(factor(Adult_dummy_del$income)))
+rfFit = train(Adult_dummy_del[,predictorset], Adult_dummy_del[,"income"], method = "rf", trControl = ctrl, metric = "ROC", tuneLength = 5)
 
 ```
 
