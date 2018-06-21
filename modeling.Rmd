@@ -26,9 +26,30 @@ plot(knnFit)
 ```
 
 ```{r}
+plot(knnFit)
+varImp(knnFit)
+plot(varImp(knnFit), main = "variable importance knn")
+```
 
-rfFit <- train(income ~ ., data = Adult_dummy_del, method = "rf", trControl = ctrl, tuneLength = 10, metric = "ROC")
-print(rfFit)
-plot(rfFit)
+```{r}
+library(pROC)
+
+```
+
+```{r}
+ctrl = trainControl(method = "cv", 
+                     number = 10, 
+                     sampling = "smote",
+                     summaryFunction= twoClassSummary, 
+                     classProbs=T,
+                     savePredictions = T)
+grid <- expand.grid(mtry = seq(2,10,2), ntree = c(700, 1000,2000) )
+rfFit = train(Adult_dummy_del[,predictorset], Adult_dummy_del[,"income"], method = "rf", trControl = ctrl, metric = "ROC", tuneLength = 10)
+
+```
+
+
+```{r}
+
 
 ```
