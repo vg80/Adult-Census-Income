@@ -17,13 +17,12 @@ colnames(Adult_dummy_del)[colnames(Adult_dummy_del)=="income..50K"] = "income"
 set.seed(400)
 ctrl = trainControl(method = "cv", 
                      number = 10, 
-                     sampling = "smote")
+                     sampling = "smote",
+                     summaryFunction= twoClassSummary, 
+                     classProbs=T,
+                     savePredictions = T)
 
-start_time = Sys.time()
-knnFit = train(Adult_dummy_del[,predictorset], Adult_dummy_del[,"income"], method = "knn", trControl = ctrl, tuneLength = 10)
-end_time = Sys.time()
-print(knnFit)
-plot(knnFit)
+kNNFit = train(Adult_dummy_del[,predictorset], Adult_dummy_del[,"income"], method = "knn", trControl = ctrl, metric = "ROC", tuneLength = 10)
 ```
 
 ```{r}
@@ -47,6 +46,21 @@ rfFit = train(Adult_dummy_del[,predictorset], Adult_dummy_del[,"income"], method
 
 
 ```{r}
-
-
+# Final model 
+rfFit
+plot(rfFit)
+#look at the variable importance and ploting
+varImp(rfFit)
+plot(varImp(rfFit), main = "variable importance knn")
+#Confusion Matrix
+confusionMatrix(rfFit, norm = "none")
+# Plotting ROC
+library(pROC)
+# select a parameter setting
+selectedindices = rfFit$pred$mtry == 2
+# Plot:
+plot.roc(as.numeric(rfFit$pred$obs[selectedindices]),
+         as.numeric(rfFit$pred$pred[selectedindices]))
+auc(as.numeric(rfFit$pred$obs[selectedindices]),
+         as.numeric(rfFit$pred$pred[selectedindices]))
 ```
