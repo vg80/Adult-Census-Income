@@ -21,7 +21,7 @@ ctrl = trainControl(method = "cv",
                      summaryFunction= twoClassSummary, 
                      classProbs=T,
                      savePredictions = T)
-grid = expand.grid(k=seq(5,17,2))
+grid = expand.grid(k=seq(51,61,2))
 kNNFit = train(Adult_dummy_del[,predictorset], Adult_dummy_del[,"income"], method = "knn", trControl = ctrl, metric = "ROC", tuneGrid = grid)
 ```
 
@@ -58,5 +58,19 @@ predictions = predict.train(object=rfFit,Adult_dummy_del[,c(predictorset, "incom
 confusionMatrix(predictions,Adult_dummy_del[,"income"])
 # Plotting ROC
 library(pROC)
+roc2 = roc(response = as.numeric(Adult_dummy_del$income), predictor = as.numeric(predict(rfFit)))
+plot(roc2)
+
+```
+```{r}
+
+nbFit = train(Adult_dummy_del[,predictorset], Adult_dummy_del[,"income"], method = "nb", trControl = ctrl, metric = "ROC", tuneLength = 10)
+
+```
+
+
+```{r}
+
+gbmFit = train(Adult_dummy_del[,predictorset], Adult_dummy_del[,"income"], method = "gbm", trControl = ctrl, metric = "ROC", tuneLength = 10)
 
 ```
