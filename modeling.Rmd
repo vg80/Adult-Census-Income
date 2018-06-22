@@ -12,7 +12,7 @@ predictorset
 colnames(Adult_dummy_del)[colnames(Adult_dummy_del)=="income..50K"] = "income"
 
 ```
-
+# kNN Model
 ```{r}
 set.seed(400)
 ctrl = trainControl(method = "cv", 
@@ -21,8 +21,8 @@ ctrl = trainControl(method = "cv",
                      summaryFunction= twoClassSummary, 
                      classProbs=T,
                      savePredictions = T)
-
-kNNFit = train(Adult_dummy_del[,predictorset], Adult_dummy_del[,"income"], method = "knn", trControl = ctrl, metric = "ROC", tuneLength = 10)
+grid = expand.grid(k=seq(5,17,2))
+kNNFit = train(Adult_dummy_del[,predictorset], Adult_dummy_del[,"income"], method = "knn", trControl = ctrl, metric = "ROC", tuneGrid = grid)
 ```
 
 ```{r}
@@ -31,7 +31,7 @@ varImp(knnFit)
 plot(varImp(knnFit), main = "variable importance knn")
 ```
 
-
+# Random Forest
 ```{r}
 ctrl = trainControl(method = "cv", 
                      number = 10, 
@@ -52,15 +52,11 @@ plot(rfFit)
 #look at the variable importance and ploting
 varImp(rfFit)
 plot(varImp(rfFit), main = "variable importance knn")
+#predictions
+predictions = predict.train(object=rfFit,Adult_dummy_del[,c(predictorset, "income")],type="raw")
 #Confusion Matrix
-confusionMatrix(rfFit, norm = "none")
+confusionMatrix(predictions,Adult_dummy_del[,"income"])
 # Plotting ROC
 library(pROC)
-# select a parameter setting
-selectedindices = rfFit$pred$mtry == 2
-# Plot:
-plot.roc(as.numeric(rfFit$pred$obs[selectedindices]),
-         as.numeric(rfFit$pred$pred[selectedindices]))
-auc(as.numeric(rfFit$pred$obs[selectedindices]),
-         as.numeric(rfFit$pred$pred[selectedindices]))
+
 ```

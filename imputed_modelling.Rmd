@@ -1,0 +1,19 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+Adult_dummy_imputed = knnImputation(Adult_dummy)
+```
+
+```{r}
+colnames(Adult_dummy_imputed)[colnames(Adult_dummy_imputed)=="income..50K"] = "income"
+
+```
+
+```{r}
+levels(Adult_dummy_imputed$income) =      make.names(levels(factor(Adult_dummy_imputed$income)))
+
+rfFit_imputed = train(Adult_dummy_imputed[,predictorset], Adult_dummy_imputed[,"income"], method = "rf", trControl = ctrl, metric = "ROC", tuneLength = 5)
+
+```
