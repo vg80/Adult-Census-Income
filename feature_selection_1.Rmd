@@ -88,7 +88,7 @@ results <- rfe(Set[,c(1:31,33:39)], Set[,32], sizes=c(1:31,33:39), rfeControl=co
 # summarize the results
 print(results)
 # list the chosen features
-predictors(results)
+P1 = predictors(results)
 # plot the results
 plot(results, type=c("g", "o"))
 
@@ -96,7 +96,7 @@ plot(results, type=c("g", "o"))
 
 ```{r}
 predictorset  = results$control$functions$selectVar(results$variables, 10)
-
+P1 = results$control$functions$selectVar(results$variables, 20)
 ```
 
 
