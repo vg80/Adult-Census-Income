@@ -7,6 +7,7 @@ output: html_document
 ```{r}
 predictorset
 ```
+
 ```{r}
 colnames(Adult_dummy_del)[colnames(Adult_dummy_del)=="income..50K"] = "income"
 levels(Adult_dummy_del$income) =      make.names(levels(factor(Adult_dummy_del$income)))
@@ -48,14 +49,6 @@ plot(rfFit)
 #look at the variable importance and ploting
 varImp(rfFit)
 plot(varImp(rfFit), main = "variable importance knn")
-#predictions
-predictions = predict.train(object=rfFit,Adult_dummy_del[,c(predictorset, "income")],type="raw")
-#Confusion Matrix
-confusionMatrix(predictions,Adult_dummy_del[,"income"])
-# Plotting ROC
-library(pROC)
-roc2 = roc(response = as.numeric(Adult_dummy_del$income), predictor = as.numeric(predict(rfFit)))
-plot(roc2)
 
 ```
 
@@ -85,4 +78,43 @@ svm_RadialFit = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method =
 
 gbmFit = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "gbm", trControl = ctrl, metric = "ROC", tuneLength = 10)
 
+```
+
+```{r}
+#Confusion Matrix
+confusionMatrix(predict(kNNFit),Adult_dummy_del[,"income"])
+confusionMatrix(predict(rfFit),Adult_dummy_del[,"income"])
+confusionMatrix(predict(gbmFit),Adult_dummy_del[,"income"])
+confusionMatrix(predict(svm_linearFit),Adult_dummy_del[,"income"])
+# Plotting ROC
+library(pROC)
+roc1 = roc(response = as.numeric(Adult_dummy_del$income), predictor = as.numeric(predict(kNNFit)))
+plot(roc1, col = "blue")
+roc2 = roc(response = as.numeric(Adult_dummy_del$income), predictor = as.numeric(predict(rfFit)))
+plot(roc2, add = T, col= "red")
+roc3 = roc(response = as.numeric(Adult_dummy_del$income), predictor = as.numeric(predict(gbmFit)))
+plot(roc3, add = T, col = "black")
+roc4 = roc(response = as.numeric(Adult_dummy_del$income), predictor = as.numeric(predict(svm_linearFit)))
+plot(roc4, add = T, col = "green")
+# Fmeasure 
+F_meas(predict(knnfFit),Adult_dummy_del[,"income"],relevant ="X0"  )
+F_meas(predict(rfFit),Adult_dummy_del[,"income"],relevant ="X0"  )
+F_meas(predict(gbmFit),Adult_dummy_del[,"income"],relevant ="X0"  )
+F_meas(predict(svmFit),Adult_dummy_del[,"income"],relevant ="X0"  )
+```
+
+# Control for under sample modelling
+```{r}
+set.seed(400)
+ctrl_under = trainControl(method = "cv", 
+                     number = 5, 
+                     sampling = "under",
+                     summaryFunction= twoClassSummary, 
+                     classProbs=T,
+                     savePredictions = T)
+```
+# kNN -undersampling
+```{r}
+grid1 = expand.grid(k=c(11,21,31,41,51,100))
+kNNFit_under = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "knn", use.all = F,trControl = ctrl, metric = "ROC", tuneGrid = grid1)
 ```
