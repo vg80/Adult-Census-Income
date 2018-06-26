@@ -25,14 +25,18 @@ ctrl = trainControl(method = "cv",
 ```
 # kNN -smote
 ```{r}
-grid = expand.grid(k=c(11,21,31,41,51))
-kNNFit = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "knn", use.all = F,trControl = ctrl, metric = "ROC", tuneGrid = grid)
+grid = expand.grid(k=c(19,31,41,51,100))
+kNNFit = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "knn", use.all = T,trControl = ctrl, metric = "ROC", tuneGrid = grid)
+```
+```{r}
+grid = expand.grid(k=c(100,125,150,200))
+kNNFit_tunned = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "knn", use.all = T,trControl = ctrl, metric = "ROC", tuneGrid = grid)
 ```
 
 ```{r}
-plot(knnFit)
-varImp(knnFit)
-plot(varImp(knnFit), main = "variable importance knn")
+plot(kNNFit)
+varImp(kNNFit)
+plot(varImp(kNNFit), main = "variable importance knn")
 ```
 
 # Random Forest- smote
@@ -41,6 +45,11 @@ rfFit = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "rf", t
 
 ```
 
+```{r}
+grid = expand.grid(.mtry =2)
+rfFit_tuned = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "rf", trControl = ctrl, metric = "ROC",ntree =1000, tuneGrid = grid)
+
+```
 
 ```{r}
 # Final model 
@@ -49,12 +58,6 @@ plot(rfFit)
 #look at the variable importance and ploting
 varImp(rfFit)
 plot(varImp(rfFit), main = "variable importance knn")
-
-```
-
-```{r}
-
-nbFit = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "nb", trControl = ctrl, metric = "ROC", tuneLength = 10)
 
 ```
 
@@ -80,6 +83,12 @@ gbmFit = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "gbm",
 
 ```
 
+Logistic Regression - smote
+```{r}
+glmFit = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "glm", trControl = ctrl, metric = "ROC", family="binomial")
+
+```
+
 ```{r}
 #Confusion Matrix
 confusionMatrix(predict(kNNFit),Adult_dummy_del[,"income"])
@@ -96,25 +105,38 @@ roc3 = roc(response = as.numeric(Adult_dummy_del$income), predictor = as.numeric
 plot(roc3, add = T, col = "black")
 roc4 = roc(response = as.numeric(Adult_dummy_del$income), predictor = as.numeric(predict(svm_linearFit)))
 plot(roc4, add = T, col = "green")
+roc5 = roc(response = as.numeric(Adult_dummy_del$income), predictor = as.numeric(predict(glmFit)))
+plot(roc5, add = T, col = "yellow")
+
 # Fmeasure 
 F_meas(predict(knnfFit),Adult_dummy_del[,"income"],relevant ="X0"  )
 F_meas(predict(rfFit),Adult_dummy_del[,"income"],relevant ="X0"  )
 F_meas(predict(gbmFit),Adult_dummy_del[,"income"],relevant ="X0"  )
 F_meas(predict(svmFit),Adult_dummy_del[,"income"],relevant ="X0"  )
 ```
-
-# Control for under sample modelling
+# Run all models with imputing missing values.
 ```{r}
-set.seed(400)
-ctrl_under = trainControl(method = "cv", 
-                     number = 5, 
-                     sampling = "under",
-                     summaryFunction= twoClassSummary, 
-                     classProbs=T,
-                     savePredictions = T)
+Adult_dummy_imputed = knnImputation(Adult_dummy)
+colnames(Adult_dummy_imputed)[colnames(Adult_dummy_imputed)=="income..50K"] = "income"
+levels(Adult_dummy_imputed$income) =      make.names(levels(factor(Adult_dummy_imputed$income)))
 ```
-# kNN -undersampling
+
 ```{r}
-grid1 = expand.grid(k=c(11,21,31,41,51,100))
-kNNFit_under = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "knn", use.all = F,trControl = ctrl, metric = "ROC", tuneGrid = grid1)
+grid = expand.grid(k=c(19,31,41,51,100))
+kNNFit = train(Adult_dummy_imputed[,P1], Adult_dummy_imputed[,"income"], method = "knn", use.all = T,trControl = ctrl, metric = "ROC", tuneGrid = grid)
+```
+
+
+
+```{r}
+rfFit_imputed = train(Adult_dummy_imputed[,P1], Adult_dummy_imputed[,"income"], method = "rf", trControl = ctrl, metric = "ROC", tuneLength = 10)
+
+```
+
+```{r}
+#Predictors for top layer models 
+top_models = data.frame(predict(kNNFit),predict(rfFit),predict(svm_linearFit), predict(gbmFit), predict(glmFit)) 
+
+#GBM as top layer model 
+ensemble_gbm = train(predictors_top,Adult_dummy_del$income,method='gbm',trControl= ctrl,tuneLength=3)
 ```
