@@ -25,18 +25,14 @@ ctrl = trainControl(method = "cv",
 ```
 # kNN -smote
 ```{r}
-grid = expand.grid(k=c(19,31,41,51,100))
-kNNFit = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "knn", use.all = T,trControl = ctrl, metric = "ROC", tuneGrid = grid)
-```
-```{r}
-grid = expand.grid(k=c(100,125,150,200))
-kNNFit_tunned = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "knn", use.all = T,trControl = ctrl, metric = "ROC", tuneGrid = grid)
+grid = expand.grid(k=c(19,31,41,51,101, 125,151, 201))
+knnFit = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "knn", use.all = T,trControl = ctrl, metric = "ROC", tuneGrid = grid)
 ```
 
 ```{r}
-plot(kNNFit)
-varImp(kNNFit)
-plot(varImp(kNNFit), main = "variable importance knn")
+plot(knnFit)
+varImp(knnFit)
+plot(varImp(knnFit), main = "variable importance knn")
 ```
 
 # Random Forest- smote
@@ -47,23 +43,53 @@ rfFit = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "rf", t
 
 ```{r}
 grid = expand.grid(.mtry =2)
-rfFit_tuned = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "rf", trControl = ctrl, metric = "ROC",ntree =1000, tuneGrid = grid)
+rfFit_tuned = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "rf", trControl = ctrl, metric = "ROC",ntree =100, tuneGrid = grid)
 
 ```
 
+Result of above chunk
+
+Random Forest 
+
+45175 samples
+   20 predictor
+    2 classes: 'X0', 'X1' 
+
+No pre-processing
+Resampling: Cross-Validated (5 fold) 
+Summary of sample sizes: 36140, 36140, 36140, 36140, 36140 
+Addtional sampling using SMOTE
+
+Resampling results:
+
+  ROC        Sens       Spec    
+  0.8819329  0.7902161  0.806107
+
+Tuning parameter 'mtry' was held constant at a value of 2
+--------
+Even ran the rf for ntree = 300 and 1000. 
+for 300, the roc was lower and for 1000, it was not able to fit the model. So the tunned model will have ntree = 500 and mtry = 2
+--------
 ```{r}
 # Final model 
 rfFit
 plot(rfFit)
 #look at the variable importance and ploting
 varImp(rfFit)
-plot(varImp(rfFit), main = "variable importance knn")
+plot(varImp(rfFit), main = "variable importance random forests")
+
+```
+# Support vector Machine model
+```{r}
+
+svm_linearFit = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "svmLinear", trControl = ctrl, metric = "ROC", tuneLength = 20)
 
 ```
 
-```{r}
 
-svm_linearFit = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "svmLinear", trControl = ctrl, metric = "ROC", tuneLength = 10)
+```{r}
+grid <- expand.grid(C = c(0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2,5))
+svm_linearFit_tuned = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "svmLinear", trControl = ctrl, metric = "ROC", tuneGrid = grid)
 
 ```
 
@@ -90,15 +116,32 @@ glmFit = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "glm",
 ```
 
 ```{r}
+# predictions
+temp_knn = knnFit$pred[knnFit$pred$k==101,]
+predictions_knn = temp_knn$pred[order(temp_knn$rowIndex)]
+temp_rf = rfFit$pred[rfFit$pred$mtry==2,]
+predictions_rf = temp_rf$pred[order(temp_rf$rowIndex)]
+temp_svm = svm_linearFit$pred[svm_linearFit$pred$C==1,]
+predictions_svm = temp_svm$pred[order(temp_svm$rowIndex)]
+temp_gbm = gbmFit$pred[which(gbmFit$pred$interaction.depth==10 & gbmFit$pred$n.trees==100 & gbmFit$pred$shrinkage==0.1, gbmFit$pred$n.minobsinnode == 10),]
+predictions_gbm = temp_gbm$pred[order(temp_gbm$rowIndex)]
+
+
+
 #Confusion Matrix
-confusionMatrix(predict(kNNFit),Adult_dummy_del[,"income"])
-confusionMatrix(predict(rfFit),Adult_dummy_del[,"income"])
-confusionMatrix(predict(gbmFit),Adult_dummy_del[,"income"])
-confusionMatrix(predict(svm_linearFit),Adult_dummy_del[,"income"])
+cm_knn = confusionMatrix(predictions_knn,Adult_dummy_del[,"income"])
+cm_rf = confusionMatrix(predictions_rf,Adult_dummy_del[,"income"])
+cm_gbm = confusionMatrix(predictions_gbm,Adult_dummy_del[,"income"])
+cm_svm = confusionMatrix(predictions_svm,Adult_dummy_del[,"income"])
+```
+
+```{r}
 # Plotting ROC
 library(pROC)
-roc1 = roc(response = as.numeric(Adult_dummy_del$income), predictor = as.numeric(predict(kNNFit)))
-plot(roc1, col = "blue")
+roc_knn = roc(predictor = as.numeric(predictions_knn), as.numeric(Adult_dummy_del[,"income"]))
+plot(roc_knn, col = "blue")
+roc_rf = roc(predictor = as.numeric(predictions_rf), as.numeric(Adult_dummy_del[,"income"]))
+plot(roc_rf, col = "red")
 roc2 = roc(response = as.numeric(Adult_dummy_del$income), predictor = as.numeric(predict(rfFit)))
 plot(roc2, add = T, col= "red")
 roc3 = roc(response = as.numeric(Adult_dummy_del$income), predictor = as.numeric(predict(gbmFit)))
@@ -122,8 +165,8 @@ levels(Adult_dummy_imputed$income) =      make.names(levels(factor(Adult_dummy_i
 ```
 
 ```{r}
-grid = expand.grid(k=c(19,31,41,51,100))
-kNNFit = train(Adult_dummy_imputed[,P1], Adult_dummy_imputed[,"income"], method = "knn", use.all = T,trControl = ctrl, metric = "ROC", tuneGrid = grid)
+grid = expand.grid(k=c(19,31,41,51,101, 125,151, 201))
+knnFit_imputed = train(Adult_dummy_imputed[,P1], Adult_dummy_imputed[,"income"], method = "knn", use.all = T,trControl = ctrl, metric = "ROC", tuneGrid = grid)
 ```
 
 
