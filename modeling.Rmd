@@ -125,6 +125,8 @@ temp_svm = svm_linearFit$pred[svm_linearFit$pred$C==1,]
 predictions_svm = temp_svm$pred[order(temp_svm$rowIndex)]
 temp_gbm = gbmFit$pred[which(gbmFit$pred$interaction.depth==10 & gbmFit$pred$n.trees==100 & gbmFit$pred$shrinkage==0.1, gbmFit$pred$n.minobsinnode == 10),]
 predictions_gbm = temp_gbm$pred[order(temp_gbm$rowIndex)]
+predictions_glm = glmFit$pred$pred[order(glmFit$pred$rowIndex)]
+
 
 
 
@@ -133,6 +135,7 @@ cm_knn = confusionMatrix(predictions_knn,Adult_dummy_del[,"income"])
 cm_rf = confusionMatrix(predictions_rf,Adult_dummy_del[,"income"])
 cm_gbm = confusionMatrix(predictions_gbm,Adult_dummy_del[,"income"])
 cm_svm = confusionMatrix(predictions_svm,Adult_dummy_del[,"income"])
+cm_glm = confusionMatrix(predictions_glm,Adult_dummy_del[,"income"])
 ```
 
 ```{r}
@@ -172,14 +175,23 @@ knnFit_imputed = train(Adult_dummy_imputed[,P1], Adult_dummy_imputed[,"income"],
 
 
 ```{r}
-rfFit_imputed = train(Adult_dummy_imputed[,P1], Adult_dummy_imputed[,"income"], method = "rf", trControl = ctrl, metric = "ROC", tuneLength = 10)
+rfFit_imputed = train(Adult_dummy_imputed[,P1], Adult_dummy_imputed[,"income"], method = "rf", trControl = Ctrl, metric = "ROC", tuneLength = 10)
 
+```
+
+
+
+
+# Comparing models
+```{r}
+resamps= resamples(list(rf = rfFit, knn =knnFit,svm = svm_linearFit, glm = glmFit, gbm = gbmFit))
+difValues <- diff(resamps)
 ```
 
 ```{r}
 #Predictors for top layer models 
-top_models = data.frame(predict(kNNFit),predict(rfFit),predict(svm_linearFit), predict(gbmFit), predict(glmFit)) 
+top_models = data.frame(predictions_knn,predictions_rf,predictions_svm, predictions_gbm, predictions_glm) 
 
 #GBM as top layer model 
-ensemble_gbm = train(predictors_top,Adult_dummy_del$income,method='gbm',trControl= ctrl,tuneLength=3)
+ensemble_gbm = train(top_models,Adult_dummy_del[,"income"],method='rf',trControl= ctrl,tuneLength=3)
 ```
