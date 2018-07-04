@@ -109,9 +109,62 @@ gbmFit = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "gbm",
 
 ```
 
-Logistic Regression - smote
+#Logistic Regression - smote
 ```{r}
 glmFit = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "glm", trControl = ctrl, metric = "ROC", family="binomial")
+
+```
+
+NoW all models with all 37 features
+```{r}
+grid = expand.grid(k=c(19,31,41,51,101, 125,151, 201))
+KNNFit = train(Adult_dummy_del[,results$optVariables], Adult_dummy_del[,"income"], method = "knn", use.all = T,trControl = ctrl, metric = "ROC", tuneGrid = grid)
+```
+
+```{r}
+RFFit = train(Adult_dummy_del[,results$optVariables], Adult_dummy_del[,"income"], method = "rf", trControl = ctrl, metric = "ROC", tuneLength = 5)
+
+```
+
+```{r}
+
+SVM_linearFit = train(Adult_dummy_del[,results$optVariables], Adult_dummy_del[,"income"], method = "svmLinear", trControl = ctrl, metric = "ROC", tuneLength = 20)
+
+```
+
+
+```{r}
+
+GBMFit = train(Adult_dummy_del[,results$optVariables], Adult_dummy_del[,"income"], method = "gbm", trControl = ctrl, metric = "ROC", tuneLength = 10)
+
+```
+
+
+```{r}
+GLMFit = train(Adult_dummy_del[,results$optVariables], Adult_dummy_del[,"income"], method = "glm", trControl = ctrl, metric = "ROC", family="binomial")
+#comparison with glmFit
+anova(GLMFit$finalModel, test = "LRT")
+#some variables are  less significant.
+```
+
+
+After removing less significant variables.
+```{r}
+lessPvalues = results$optVariables[c(1:24,26:28,30:31,33:37)]
+GLM1Fit = train(Adult_dummy_del[,lessPvalues], Adult_dummy_del[,"income"], method = "glm", trControl = ctrl, metric = "ROC", family="binomial")
+# Now all variables are significant. we will compare this model with the glmFit.
+
+```
+
+
+```{r}
+
+Adult_del = Adult_dummy[which(complete.cases(Adult_dummy)==TRUE),]
+colnames(Adult_del)[colnames(Adult_del)=="income..50K"] = "income"
+levels(Adult_del$income) =      make.names(levels(factor(Adult_del$income)))
+
+
+glmFitwithall = train(income~.,Adult_del, method = "glm", trControl = ctrl, metric = "ROC", family="binomial")
 
 ```
 
@@ -121,11 +174,14 @@ temp_knn = knnFit$pred[knnFit$pred$k==101,]
 predictions_knn = temp_knn$pred[order(temp_knn$rowIndex)]
 temp_rf = rfFit$pred[rfFit$pred$mtry==2,]
 predictions_rf = temp_rf$pred[order(temp_rf$rowIndex)]
-temp_svm = svm_linearFit$pred[svm_linearFit$pred$C==1,]
+temp_svm = svm_linearFit_tuned$pred[svm_linearFit_tuned$pred$C==0.25,]
 predictions_svm = temp_svm$pred[order(temp_svm$rowIndex)]
 temp_gbm = gbmFit$pred[which(gbmFit$pred$interaction.depth==10 & gbmFit$pred$n.trees==100 & gbmFit$pred$shrinkage==0.1, gbmFit$pred$n.minobsinnode == 10),]
 predictions_gbm = temp_gbm$pred[order(temp_gbm$rowIndex)]
 predictions_glm = glmFit$pred$pred[order(glmFit$pred$rowIndex)]
+predictions_GLM = GLMFit$pred$pred[order(GLMFit$pred$rowIndex)]
+predictions_GLM1 = GLM1Fit$pred$pred[order(GLM1Fit$pred$rowIndex)]
+predictions_glmwithall = glmFitwithall$pred$pred[order(glmFitwithall$pred$rowIndex)]
 
 
 
@@ -136,8 +192,18 @@ cm_rf = confusionMatrix(predictions_rf,Adult_dummy_del[,"income"])
 cm_gbm = confusionMatrix(predictions_gbm,Adult_dummy_del[,"income"])
 cm_svm = confusionMatrix(predictions_svm,Adult_dummy_del[,"income"])
 cm_glm = confusionMatrix(predictions_glm,Adult_dummy_del[,"income"])
+cm_GLM = confusionMatrix(predictions_GLM,Adult_dummy_del[,"income"])
+cm_GLM1 = confusionMatrix(predictions_GLM1,Adult_dummy_del[,"income"])
+cm_glmwithall = confusionMatrix(predictions_glmwithall,Adult_dummy_del[,"income"])
 ```
+By looking at the confusion matrices we see that GLM model gives  better accuracy. 
+Also
+k <- length(glmFit$finalModel$coefficients)
+D_M <- glmFit$finalModel$deviance
+D_0 <- glmFit$finalModel$null.deviance
 
+1 - pchisq(q = D_0 - D_M, df = k - 1)
+gives 0, therefore we reject the null hypothesis that there is no significant difference between the grand mean model (intercept-only model) and the model "glm.model.wld" (model with predictors). This means that at the 5% significance level the null model does not fit the observed data better than the multivariate model "glm.model.wld".
 ```{r}
 # Plotting ROC
 library(pROC)
@@ -145,20 +211,13 @@ roc_knn = roc(predictor = as.numeric(predictions_knn), as.numeric(Adult_dummy_de
 plot(roc_knn, col = "blue")
 roc_rf = roc(predictor = as.numeric(predictions_rf), as.numeric(Adult_dummy_del[,"income"]))
 plot(roc_rf, col = "red")
-roc2 = roc(response = as.numeric(Adult_dummy_del$income), predictor = as.numeric(predict(rfFit)))
-plot(roc2, add = T, col= "red")
-roc3 = roc(response = as.numeric(Adult_dummy_del$income), predictor = as.numeric(predict(gbmFit)))
-plot(roc3, add = T, col = "black")
-roc4 = roc(response = as.numeric(Adult_dummy_del$income), predictor = as.numeric(predict(svm_linearFit)))
-plot(roc4, add = T, col = "green")
-roc5 = roc(response = as.numeric(Adult_dummy_del$income), predictor = as.numeric(predict(glmFit)))
-plot(roc5, add = T, col = "yellow")
+roc_svm = roc(predictor = as.numeric(predictions_svm), as.numeric(Adult_dummy_del[,"income"]))
+plot(roc_svm, add = T, col= "purple")
+roc_gbm = roc(predictor = as.numeric(predictions_gbm), as.numeric(Adult_dummy_del[,"income"]))
+plot(roc_gbm, add = T, col = "black")
+roc_glm = roc(predictor = as.numeric(predictions_glm), as.numeric(Adult_dummy_del[,"income"]))
+plot(roc_glm, add = T, col = "green")
 
-# Fmeasure 
-F_meas(predict(knnfFit),Adult_dummy_del[,"income"],relevant ="X0"  )
-F_meas(predict(rfFit),Adult_dummy_del[,"income"],relevant ="X0"  )
-F_meas(predict(gbmFit),Adult_dummy_del[,"income"],relevant ="X0"  )
-F_meas(predict(svmFit),Adult_dummy_del[,"income"],relevant ="X0"  )
 ```
 # Run all models with imputing missing values.
 ```{r}
@@ -178,14 +237,32 @@ knnFit_imputed = train(Adult_dummy_imputed[,P1], Adult_dummy_imputed[,"income"],
 rfFit_imputed = train(Adult_dummy_imputed[,P1], Adult_dummy_imputed[,"income"], method = "rf", trControl = Ctrl, metric = "ROC", tuneLength = 10)
 
 ```
+Since imputation is not improving the result, therefore continuing with the deleted missing values.
 
 
 
 
 # Comparing models
 ```{r}
-resamps= resamples(list(rf = rfFit, knn =knnFit,svm = svm_linearFit, glm = glmFit, gbm = gbmFit))
+resamps= resamples(list(rf = rfFit, knn =knnFit,svm = svm_linearFit_tuned, glm = glmFit, gbm = gbmFit))
+theme1 <- trellis.par.get()
+theme1$plot.symbol$col = rgb(.2, .2, .2, .4)
+theme1$plot.symbol$pch = 16
+theme1$plot.line$col = rgb(1, 0, 0, .7)
+theme1$plot.line$lwd <- 2
+trellis.par.set(theme1)
+bwplot(resamps, layout = c(3, 1))
 difValues <- diff(resamps)
+summary(difValues)
+```
+All the p values are greater than 0.05, so there is no much difference between the models in terms of roc.
+```{r}
+#Table for comparison
+col1=c(cm_knn$byClass["Balanced Accuracy"],cm_rf$byClass["Balanced Accuracy"], cm_svm$byClass["Balanced Accuracy"], cm_gbm$byClass["Balanced Accuracy"], cm_glm$byClass["Balanced Accuracy"])
+col2=c(cm_knn$byClass["F1"],cm_rf$byClass["F1"], cm_svm$byClass["F1"], cm_gbm$byClass["F1"], cm_glm$byClass["F1"])
+col3=c(cm_knn$overall["Accuracy"],cm_rf$overall["Accuracy"], cm_svm$overall["Accuracy"], cm_gbm$overall["Accuracy"], cm_glm$overall["Accuracy"])
+table = data.frame(BalancedAccuracy = col1, Fmeasure = col2, Accuracy = col3)
+rownames(table) = c("kNN", "Random Forests", "Support vector Machine", "Gradient Boost", "Regression")
 ```
 
 ```{r}
