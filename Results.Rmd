@@ -1,0 +1,80 @@
+---
+title: "Results"
+author: "vidhu"
+date: "July 5, 2018"
+output: html_document
+---
+
+
+#  Models
+1) KNN model (it was giving maximum roc when taken all 37 features, specially a lot of increase in specificity compared with 20 features model)
+2) GBM model (the roc is increased but not very significantly in GBM)
+3) GLM model (roc is increased as well as residuals are decreased at a significant level)
+```{r}
+plot(KNNFit, main= "tunning parameters for knn ")
+plot(GBMFit, main= "tunning parameters for gbm ")
+anova(GLMFit$finalModel, glmFit$finalModel,GLM1Fit$finalModel, test = "Chisq")
+
+```
+```{r}
+# predictions
+temp_KNN = KNNFit$pred[KNNFit$pred$k==125,]
+predictions_KNN = temp_KNN$pred[order(temp_KNN$rowIndex)]
+
+temp_GBM = GBMFit$pred[which(GBMFit$pred$interaction.depth==6 & GBMFit$pred$n.trees==450 & GBMFit$pred$shrinkage==0.1, GBMFit$pred$n.minobsinnode == 10),]
+predictions_GBM = temp_GBM$pred[order(temp_GBM$rowIndex)]
+
+
+predictions_GLM = GLMFit$pred$pred[order(GLMFit$pred$rowIndex)]
+predictions_glmwithall = glmFitwithall$pred$pred[order(glmFitwithall$pred$rowIndex)]
+
+
+
+
+#Confusion Matrix
+cm_KNN = confusionMatrix(predictions_KNN,Adult_dummy_del[,"income"])
+cm_GBM = confusionMatrix(predictions_GBM,Adult_dummy_del[,"income"])
+
+cm_GLM = confusionMatrix(predictions_GLM,Adult_dummy_del[,"income"])
+
+```
+
+#comparing models
+
+```{r}
+Resamps= resamples(list(knn =KNNFit, glm = GLMFit, gbm = GBMFit))
+theme1 <- trellis.par.get()
+theme1$plot.symbol$col = rgb(.2, .2, .2, .4)
+theme1$plot.symbol$pch = 16
+theme1$plot.line$col = rgb(1, 0, 0, .7)
+theme1$plot.line$lwd <- 2
+trellis.par.set(theme1)
+bwplot(Resamps, layout = c(3, 1))
+DifValues <- diff(Resamps)
+summary(DifValues)
+```
+
+```{r}
+#Table for comparison
+col1=c(cm_KNN$byClass["Balanced Accuracy"], cm_GBM$byClass["Balanced Accuracy"], cm_GLM$byClass["Balanced Accuracy"])
+col2=c(cm_KNN$byClass["F1"], cm_GBM$byClass["F1"], cm_GLM$byClass["F1"])
+col3=c(cm_KNN$overall["Accuracy"], cm_GBM$overall["Accuracy"], cm_GLM$overall["Accuracy"])
+Table = data.frame(BalancedAccuracy = col1, Fmeasure = col2, Accuracy = col3)
+rownames(Table) = c("kNN", "Gradient Boost", "Regression")
+Table
+```
+
+
+Comparison between top 20 features and 37 features
+```{r}
+summary(resamples(list(kNN20 = knnFit, kNN37 = KNNFit)))
+summary(resamples(list(GBM20 = gbmFit, GBM37 = GBMFit)))
+summary(resamples(list(glm20 = glmFit, glm37 = GLMFit)))
+```
+
+```{r}
+plot(varImp(kNNFit), main = "variable importance knn")
+plot(varImp(GBMFit), main = "variable importance knn")
+plot(varImp(GLMFit), main = "variable importance knn")
+
+```
