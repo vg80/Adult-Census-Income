@@ -33,6 +33,7 @@ Adult_dummy$income..50K<-as.factor(Adult_dummy$income..50K)
 Adult_dummy$workclass.Never.worked= NULL
 #deleting missing values
 Adult_dummy_del = Adult_dummy[which(complete.cases(Adult_dummy)==TRUE),]
+colnames(Adult_dummy_del)[colnames(Adult_dummy_del)=="income..50K"] = "income"
 ```
 
 
@@ -45,9 +46,9 @@ library(FSelector)
 
 ```{r}
 
-N= nearZeroVar(Adult_dummy_del[,-which(names(Adult_dummy_del)=="income..50K")], saveMetrics = TRUE)
+N= nearZeroVar(Adult_dummy_del[,-which(names(Adult_dummy_del)=="income")], saveMetrics = TRUE)
 # lets find information gain of attributes
-M = information.gain(income..50K~., Adult_dummy_del)
+M = information.gain(income~., Adult_dummy_del)
 #checking 
 rownames(N)==rownames(M)
 Z = cbind(N,M)
@@ -62,19 +63,15 @@ Adult_dummy_del = Adult_dummy_del[,name]
 
 ```{r}
 # calculate correlation matrix
-correlationMatrix = cor(Adult_dummy_del[,-which(names(Adult_dummy_del)=="income..50K")])
+correlationMatrix = cor(Adult_dummy_del[,-which(names(Adult_dummy_del)=="income")])
 # summarize the correlation matrix
 print(correlationMatrix)
 # find attributes that are highly corrected (ideally >0.75)
 highlyCorrelated = findCorrelation(correlationMatrix, cutoff=0.8)
 # print indexes of highly correlated attributes
 print(highlyCorrelated)
-colnames(dummy_del[,highlyCorrelated])
-```
-```{r}
-
-colnames(Adult_dummy_del)[colnames(Adult_dummy_del)=="income..50K"] = "income"
-
+colnames(Adult_dummy_del[,highlyCorrelated])
+corrplot::corrplot(correlationMatrix)
 ```
 
 ```{r}

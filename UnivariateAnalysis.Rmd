@@ -93,10 +93,7 @@ ggplot(aes(x = income, y = age), data = adult) +
 ```
 
 ```{r}
-
-par(mfrow=c(1,2))
-hist(adult$age[adult$income=="<=50K"], xlim = c(17,90), ylim = c(0,1600), main = "<=50K", xlab = "age", col = "blue", breaks = seq(10,90,2))
-hist(adult$age[adult$income==">50K"], xlim = c(17,90),ylim = c(0,1600), main = ">50K", xlab = "age", col = "red", breaks = seq(10,90,2))
+ggplot(adult, aes(age,color= income)) + geom_density()
 ```
 
 The Age variable has high variability. The distribution and mean are quite different for income classes.older people tend to earn more. So age will be a good predictor of income. 
@@ -296,7 +293,7 @@ ggplot(adult, aes(x = adult$occupation, fill = adult$income)) +
   labs(x = "Income", 
        y = "Number of people",
        fill = "Income") +
-  ggtitle("Income grouped by workclass") +   
+  ggtitle("Income grouped by occupation") +   
   scale_y_continuous(breaks = seq(0,7000,500))
 
 # Percentage of occupation categories with income <50K and >=50K:
@@ -360,7 +357,7 @@ ggplot(adult, aes(x = adult$nativecountry, fill = adult$income)) +
   labs(x = "Income", 
        y = "Number of people",
        fill = "Income") +
-  ggtitle("Income grouped by relationship") +   
+  ggtitle("Income grouped by Native Country") +   
   scale_y_continuous(breaks = seq(0,20000,1000))
 
 # Percentage of occupation categories with income <50K and >=50K:
@@ -383,6 +380,24 @@ table(adult$education)
 ```
 
 
+
+
+
+```{r}
+summary(adult$education)
+
+ggplot(adult, aes(x = adult$education, fill = adult$income)) +
+  geom_bar(position = "stack",na.rm = FALSE) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "Income", 
+       y = "Number of people",
+       fill = "Income") +
+  ggtitle("Income grouped by education") +   
+  scale_y_continuous(breaks = seq(0,20000,1000))
+
+# Percentage of occupation categories with income <50K and >=50K:
+prop.table(table(adult$education, adult$income), margin = 1)*100
+```
 ```{r}
 par(mfrow=c(2,2))
  barplot(table(adult$sex), col = "blue", main = "Sex")
