@@ -5,11 +5,7 @@ date: "June 15, 2018"
 output: html_document
 ---
 ```{r}
-predictorset
-```
 
-```{r}
-colnames(Adult_dummy_del)[colnames(Adult_dummy_del)=="income..50K"] = "income"
 levels(Adult_dummy_del$income) =      make.names(levels(factor(Adult_dummy_del$income)))
 
 ```
@@ -176,7 +172,7 @@ temp_rf = rfFit$pred[rfFit$pred$mtry==2,]
 predictions_rf = temp_rf$pred[order(temp_rf$rowIndex)]
 temp_svm = svm_linearFit_tuned$pred[svm_linearFit_tuned$pred$C==0.25,]
 predictions_svm = temp_svm$pred[order(temp_svm$rowIndex)]
-temp_gbm = gbmFit$pred[which(gbmFit$pred$interaction.depth==10 & gbmFit$pred$n.trees==100 & gbmFit$pred$shrinkage==0.1, gbmFit$pred$n.minobsinnode == 10),]
+temp_gbm = gbmFit$pred[which(gbmFit$pred$interaction.depth==10 & gbmFit$pred$n.trees==100 & gbmFit$pred$shrinkage==0.1& gbmFit$pred$n.minobsinnode == 10),]
 predictions_gbm = temp_gbm$pred[order(temp_gbm$rowIndex)]
 predictions_glm = glmFit$pred$pred[order(glmFit$pred$rowIndex)]
 predictions_GLM = GLMFit$pred$pred[order(GLMFit$pred$rowIndex)]
@@ -207,16 +203,11 @@ gives 0, therefore we reject the null hypothesis that there is no significant di
 ```{r}
 # Plotting ROC
 library(pROC)
-roc_knn = roc(predictor = as.numeric(predictions_knn), as.numeric(Adult_dummy_del[,"income"]))
-plot(roc_knn, col = "blue")
-roc_rf = roc(predictor = as.numeric(predictions_rf), as.numeric(Adult_dummy_del[,"income"]))
-plot(roc_rf, col = "red")
-roc_svm = roc(predictor = as.numeric(predictions_svm), as.numeric(Adult_dummy_del[,"income"]))
-plot(roc_svm, add = T, col= "purple")
-roc_gbm = roc(predictor = as.numeric(predictions_gbm), as.numeric(Adult_dummy_del[,"income"]))
-plot(roc_gbm, add = T, col = "black")
-roc_glm = roc(predictor = as.numeric(predictions_glm), as.numeric(Adult_dummy_del[,"income"]))
-plot(roc_glm, add = T, col = "green")
+plot.roc(knnFit$pred$obs[knnFit$pred$k == 101],knnFit$pred$X0[knnFit$pred$k == 101], col = "blue")
+
+plot.roc(rfFit$pred$obs[rfFit$pred$mtry == 2],rfFit$pred$X0[rfFit$pred$mtry == 2], add= T, col = "black")
+
+plot.roc(gbmFit$pred$obs[gbmFit$pred$interaction.depth==10 & gbmFit$pred$n.trees==100 & gbmFit$pred$shrinkage==0.1& gbmFit$pred$n.minobsinnode == 10],gbmFit$pred$X0[gbmFit$pred$interaction.depth==10 & gbmFit$pred$n.trees==100 & gbmFit$pred$shrinkage==0.1& gbmFit$pred$n.minobsinnode == 10], add = T, col = "red")
 
 ```
 # Run all models with imputing missing values.
@@ -244,7 +235,7 @@ Since imputation is not improving the result, therefore continuing with the dele
 
 # Comparing models
 ```{r}
-resamps= resamples(list(rf = rfFit, knn =knnFit,svm = svm_linearFit_tuned, glm = glmFit, gbm = gbmFit))
+resamps= resamples(list(rf = rfFit, knn =KNNFit,svm = svm_linearFit_tuned, glm = glmFit, gbm = gbmFit))
 theme1 <- trellis.par.get()
 theme1$plot.symbol$col = rgb(.2, .2, .2, .4)
 theme1$plot.symbol$pch = 16
@@ -267,8 +258,8 @@ rownames(table) = c("kNN", "Random Forests", "Support vector Machine", "Gradient
 
 ```{r}
 #Predictors for top layer models 
-top_models = data.frame(predictions_knn,predictions_rf,predictions_svm, predictions_gbm, predictions_glm) 
+top_models = data.frame(predictions_knn,predictions_rf, predictions_gbm, predictions_glm) 
 
 #GBM as top layer model 
-ensemble_gbm = train(top_models,Adult_dummy_del[,"income"],method='rf',trControl= ctrl,tuneLength=3)
+ensemble_gbm = train(top_models,Adult_dummy_del[,"income"],method='gbm',trControl= ctrl,tuneLength=3)
 ```
