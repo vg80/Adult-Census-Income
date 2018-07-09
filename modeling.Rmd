@@ -111,6 +111,29 @@ glmFit = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "glm",
 
 ```
 
+
+# Run all models with imputing missing values.
+```{r}
+Adult_dummy_imputed = knnImputation(Adult_dummy)
+colnames(Adult_dummy_imputed)[colnames(Adult_dummy_imputed)=="income..50K"] = "income"
+levels(Adult_dummy_imputed$income) =      make.names(levels(factor(Adult_dummy_imputed$income)))
+```
+
+```{r}
+grid = expand.grid(k=c(19,31,41,51,101, 125,151, 201))
+knnFit_imputed = train(Adult_dummy_imputed[,P1], Adult_dummy_imputed[,"income"], method = "knn", use.all = T,trControl = ctrl, metric = "ROC", tuneGrid = grid)
+```
+
+
+
+```{r}
+rfFit_imputed = train(Adult_dummy_imputed[,P1], Adult_dummy_imputed[,"income"], method = "rf", trControl = Ctrl, metric = "ROC", tuneLength = 10)
+
+```
+Since imputation is not improving the result, therefore continuing with the deleted missing values.
+
+
+
 NoW all models with all 37 features
 ```{r}
 grid = expand.grid(k=c(19,31,41,51,101, 125,151, 201))
@@ -123,8 +146,9 @@ RFFit = train(Adult_dummy_del[,results$optVariables], Adult_dummy_del[,"income"]
 ```
 
 ```{r}
+grid <- expand.grid(C = c(0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.5, 2,5))
+SVM_linearFit = train(Adult_dummy_del[,results$optVariables], Adult_dummy_del[,"income"], method = "svmLinear", trControl = ctrl, metric = "ROC", tuneGrid = grid)
 
-SVM_linearFit = train(Adult_dummy_del[,results$optVariables], Adult_dummy_del[,"income"], method = "svmLinear", trControl = ctrl, metric = "ROC", tuneLength = 20)
 
 ```
 
@@ -149,37 +173,38 @@ After removing less significant variables.
 lessPvalues = results$optVariables[c(1:24,26:28,30:31,33:37)]
 GLM1Fit = train(Adult_dummy_del[,lessPvalues], Adult_dummy_del[,"income"], method = "glm", trControl = ctrl, metric = "ROC", family="binomial")
 # Now all variables are significant. we will compare this model with the glmFit.
-
+anova(GLMFit$finalModel,GLM1Fit$finalModel, glmFit$finalModel,test = "Chisq")
 ```
 
 
-```{r}
-
-Adult_del = Adult_dummy[which(complete.cases(Adult_dummy)==TRUE),]
-colnames(Adult_del)[colnames(Adult_del)=="income..50K"] = "income"
-levels(Adult_del$income) =      make.names(levels(factor(Adult_del$income)))
 
 
-glmFitwithall = train(income~.,Adult_del, method = "glm", trControl = ctrl, metric = "ROC", family="binomial")
-
-```
 
 ```{r}
 # predictions
 temp_knn = knnFit$pred[knnFit$pred$k==101,]
 predictions_knn = temp_knn$pred[order(temp_knn$rowIndex)]
+
 temp_rf = rfFit$pred[rfFit$pred$mtry==2,]
 predictions_rf = temp_rf$pred[order(temp_rf$rowIndex)]
+
 temp_svm = svm_linearFit_tuned$pred[svm_linearFit_tuned$pred$C==0.25,]
 predictions_svm = temp_svm$pred[order(temp_svm$rowIndex)]
+
 temp_gbm = gbmFit$pred[which(gbmFit$pred$interaction.depth==10 & gbmFit$pred$n.trees==100 & gbmFit$pred$shrinkage==0.1& gbmFit$pred$n.minobsinnode == 10),]
 predictions_gbm = temp_gbm$pred[order(temp_gbm$rowIndex)]
+
 predictions_glm = glmFit$pred$pred[order(glmFit$pred$rowIndex)]
+
 predictions_GLM = GLMFit$pred$pred[order(GLMFit$pred$rowIndex)]
+
 predictions_GLM1 = GLM1Fit$pred$pred[order(GLM1Fit$pred$rowIndex)]
-predictions_glmwithall = glmFitwithall$pred$pred[order(glmFitwithall$pred$rowIndex)]
 
+temp_KNN = KNNFit$pred[KNNFit$pred$k==125,]
+predictions_KNN = temp_KNN$pred[order(temp_KNN$rowIndex)]
 
+temp_GBM = GBMFit$pred[which(GBMFit$pred$interaction.depth==6 & GBMFit$pred$n.trees==450 & GBMFit$pred$shrinkage==0.1, GBMFit$pred$n.minobsinnode == 10),]
+predictions_GBM = temp_GBM$pred[order(temp_GBM$rowIndex)]
 
 
 #Confusion Matrix
@@ -190,16 +215,12 @@ cm_svm = confusionMatrix(predictions_svm,Adult_dummy_del[,"income"])
 cm_glm = confusionMatrix(predictions_glm,Adult_dummy_del[,"income"])
 cm_GLM = confusionMatrix(predictions_GLM,Adult_dummy_del[,"income"])
 cm_GLM1 = confusionMatrix(predictions_GLM1,Adult_dummy_del[,"income"])
-cm_glmwithall = confusionMatrix(predictions_glmwithall,Adult_dummy_del[,"income"])
-```
-By looking at the confusion matrices we see that GLM model gives  better accuracy. 
-Also
-k <- length(glmFit$finalModel$coefficients)
-D_M <- glmFit$finalModel$deviance
-D_0 <- glmFit$finalModel$null.deviance
+cm_KNN = confusionMatrix(predictions_KNN,Adult_dummy_del[,"income"])
+cm_GBM = confusionMatrix(predictions_GBM,Adult_dummy_del[,"income"])
 
-1 - pchisq(q = D_0 - D_M, df = k - 1)
-gives 0, therefore we reject the null hypothesis that there is no significant difference between the grand mean model (intercept-only model) and the model "glm.model.wld" (model with predictors). This means that at the 5% significance level the null model does not fit the observed data better than the multivariate model "glm.model.wld".
+
+```
+
 ```{r}
 # Plotting ROC
 library(pROC)
@@ -209,33 +230,35 @@ plot.roc(rfFit$pred$obs[rfFit$pred$mtry == 2],rfFit$pred$X0[rfFit$pred$mtry == 2
 
 plot.roc(gbmFit$pred$obs[gbmFit$pred$interaction.depth==10 & gbmFit$pred$n.trees==100 & gbmFit$pred$shrinkage==0.1& gbmFit$pred$n.minobsinnode == 10],gbmFit$pred$X0[gbmFit$pred$interaction.depth==10 & gbmFit$pred$n.trees==100 & gbmFit$pred$shrinkage==0.1& gbmFit$pred$n.minobsinnode == 10], add = T, col = "red")
 
-```
-# Run all models with imputing missing values.
-```{r}
-Adult_dummy_imputed = knnImputation(Adult_dummy)
-colnames(Adult_dummy_imputed)[colnames(Adult_dummy_imputed)=="income..50K"] = "income"
-levels(Adult_dummy_imputed$income) =      make.names(levels(factor(Adult_dummy_imputed$income)))
-```
+plot.roc(svm_linearFit_tuned$pred$obs[svm_linearFit_tuned$pred$C==0.25], svm_linearFit_tuned$pred$X0[svm_linearFit_tuned$pred$C==0.25], add = T,col = "green")
+plot.roc(glmFit$pred$obs, glmFit$pred$X0, add =T, col = "purple")
 
-```{r}
-grid = expand.grid(k=c(19,31,41,51,101, 125,151, 201))
-knnFit_imputed = train(Adult_dummy_imputed[,P1], Adult_dummy_imputed[,"income"], method = "knn", use.all = T,trControl = ctrl, metric = "ROC", tuneGrid = grid)
 ```
 
 
 
 ```{r}
-rfFit_imputed = train(Adult_dummy_imputed[,P1], Adult_dummy_imputed[,"income"], method = "rf", trControl = Ctrl, metric = "ROC", tuneLength = 10)
+#Table for comparison
+col1=c(cm_knn$byClass["Balanced Accuracy"],cm_rf$byClass["Balanced Accuracy"], cm_svm$byClass["Balanced Accuracy"], cm_gbm$byClass["Balanced Accuracy"], cm_glm$byClass["Balanced Accuracy"])
+col2=c(cm_knn$byClass["F1"],cm_rf$byClass["F1"], cm_svm$byClass["F1"], cm_gbm$byClass["F1"], cm_glm$byClass["F1"])
+col3=c(cm_knn$overall["Accuracy"],cm_rf$overall["Accuracy"], cm_svm$overall["Accuracy"], cm_gbm$overall["Accuracy"], cm_glm$overall["Accuracy"])
+table = data.frame(BalancedAccuracy = col1, Fmeasure = col2, Accuracy = col3)
+rownames(table) = c("kNN", "Random Forests", "Support vector Machine", "Gradient Boost", "Regression")
 
+#Table for comparison
+col1=c(cm_KNN$byClass["Balanced Accuracy"], cm_GBM$byClass["Balanced Accuracy"], cm_GLM$byClass["Balanced Accuracy"])
+col2=c(cm_KNN$byClass["F1"], cm_GBM$byClass["F1"], cm_GLM$byClass["F1"])
+col3=c(cm_KNN$overall["Accuracy"], cm_GBM$overall["Accuracy"], cm_GLM$overall["Accuracy"])
+Table = data.frame(BalancedAccuracy = col1, Fmeasure = col2, Accuracy = col3)
+rownames(Table) = c("kNN", "Gradient Boost", "Regression")
+Table
 ```
-Since imputation is not improving the result, therefore continuing with the deleted missing values.
-
 
 
 
 # Comparing models
 ```{r}
-resamps= resamples(list(rf = rfFit, knn =KNNFit,svm = svm_linearFit_tuned, glm = glmFit, gbm = gbmFit))
+resamps= resamples(list(knn20 = knnFit, knn37 =KNNFit, rf = rfFit, svm = svm_linearFit_tuned, gbm20 = gbmFit, gbm37 = GBMFit, glm20 = glmFit, glm37 =GLMFit))
 theme1 <- trellis.par.get()
 theme1$plot.symbol$col = rgb(.2, .2, .2, .4)
 theme1$plot.symbol$pch = 16
@@ -246,20 +269,16 @@ bwplot(resamps, layout = c(3, 1))
 difValues <- diff(resamps)
 summary(difValues)
 ```
-All the p values are greater than 0.05, so there is no much difference between the models in terms of roc.
-```{r}
-#Table for comparison
-col1=c(cm_knn$byClass["Balanced Accuracy"],cm_rf$byClass["Balanced Accuracy"], cm_svm$byClass["Balanced Accuracy"], cm_gbm$byClass["Balanced Accuracy"], cm_glm$byClass["Balanced Accuracy"])
-col2=c(cm_knn$byClass["F1"],cm_rf$byClass["F1"], cm_svm$byClass["F1"], cm_gbm$byClass["F1"], cm_glm$byClass["F1"])
-col3=c(cm_knn$overall["Accuracy"],cm_rf$overall["Accuracy"], cm_svm$overall["Accuracy"], cm_gbm$overall["Accuracy"], cm_glm$overall["Accuracy"])
-table = data.frame(BalancedAccuracy = col1, Fmeasure = col2, Accuracy = col3)
-rownames(table) = c("kNN", "Random Forests", "Support vector Machine", "Gradient Boost", "Regression")
-```
+
+
 
 ```{r}
-#Predictors for top layer models 
-top_models = data.frame(predictions_knn,predictions_rf, predictions_gbm, predictions_glm) 
+#Predictors for top 3 models 
+top_models = data.frame(pred_knn = predictions_KNN,pred_rf =predictions_rf, pred_gbm = predictions_gbm, pred_glm = predictions_GLM) 
 
-#GBM as top layer model 
-ensemble_gbm = train(top_models,Adult_dummy_del[,"income"],method='gbm',trControl= ctrl,tuneLength=3)
+#Ensembling
+
+top_models$pred_majority = as.factor(ifelse(top_models$pred_gbm=='X0' & top_models$pred_knn=='X0','X0',ifelse(top_models$pred_gbm=='X0' & top_models$pred_glm=='X0','X0',ifelse(top_models$pred_knn=='X0' & top_models$pred_glm=='X0','X0','X1'))))
+confusionMatrix(top_models$pred_majority, Adult_dummy_del$income)
+
 ```
