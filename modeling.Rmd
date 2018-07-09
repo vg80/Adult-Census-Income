@@ -279,6 +279,7 @@ top_models = data.frame(pred_knn = predictions_KNN,pred_rf =predictions_rf, pred
 #Ensembling
 
 top_models$pred_majority = as.factor(ifelse(top_models$pred_gbm=='X0' & top_models$pred_knn=='X0','X0',ifelse(top_models$pred_gbm=='X0' & top_models$pred_glm=='X0','X0',ifelse(top_models$pred_knn=='X0' & top_models$pred_glm=='X0','X0','X1'))))
-confusionMatrix(top_models$pred_majority, Adult_dummy_del$income)
+cm_ensemble = confusionMatrix(top_models$pred_majority, Adult_dummy_del$income)
+
 
 ```

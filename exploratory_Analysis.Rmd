@@ -17,12 +17,12 @@ investment$investor = as.factor(investment$investor)
 ```{r}
 table(investment$investor)
 
-````
+```
 
 ```{r}
 
 mylogitnull = glm(investor~1, data= investment, family = binomial)
-summary(mylogit)
+summary(mylogitnull)
 ```
 ```{r}
 
@@ -33,83 +33,31 @@ anova(mylogitfull, test = "LRT")
 
 
 ```{r}
-
+#Removing fnlwgt, race and native country
 mylogit1 = glm(investor~age + workclass +educationnum +maritalstatus+ occupation +relationship +sex +hoursperweek + income , investment, family = binomial, x=TRUE)
 summary(mylogit1)
 anova(mylogitfull, mylogit1, test = "Chisq")
+anova(mylogit1, test = "Chisq")
 ```
+p value is not <0.05, therefore models are not different.
 
 
 ```{r}
 
-mylogit1 = glm(investor~age + workclass +educationnum +maritalstatus+ occupation +relationship +sex +hoursperweek + income , investment, family = binomial, x=TRUE)
-summary(mylogit1)
-anova(mylogitfull, mylogit1, test = "Chisq")
-```
-
-
-```{r}
-mylogit2 = glm(investor~age+workclass+  +educationnum +maritalstatus+occupation +relationship +sex +hoursperweek + income , investment, family = binomial, x=TRUE)
+mylogit2 <- glm(investor ~ age + education + occupation + relationship +sex, data = investment, family = "binomial")
 summary(mylogit2)
-anova(mylogit1, mylogit2, test = "Chisq")
-```
-
-No level in Native Country, race and work class came out to be significant. so removing them.
-```{r}
-mylogit1 <- glm(income ~ age + education + maritalstatus + occupation + relationship + sex + capitalgain_cat +workclass + hoursperweek_cat, data = investment, family = "binomial")
-summary(mylogit1)
 ```
 
 
 ```{r}
 
-mylogit2 <- glm(income ~ age + education + occupation + relationship +sex, data = investment, family = "binomial")
-summary(mylogit)
-```
-
-
-```{r}
-
-mylogit3 <- glm(class ~ age +education+ relationship+sex +income, data = investment, family = "binomial")
-summary(mylogit)
+mylogit3 <- glm(investor ~ age +education+ relationship+sex +income, data = investment, family = "binomial")
+summary(mylogit3)
+anova(mylogit1, mylogit3,test = "Chisq")
 ```
 
 ```{r}
 
-mylogit4 <- glm(class ~ age +education+ sex +income, data = investment, family = "binomial")
-summary(mylogit)
-```
-
-```{r}
-anova(mylogit3, mylogit4, test = "Chisq")
-```
-
-```{r}
-mylogit5 <- glm(class ~ age +education+ sex, data = investment, family = "binomial")
-summary(mylogit)
-```
-```{r}
-anova(mylogit3, mylogit5, test = "Chisq")
-```
-
-```{r}
-investment = adult
-investment$income= ifelse(investment$income ==">50K", 1, 0)
-g = glm(income ~ age, family=binomial(logit), data=investment, control = list(maxit = 50)) 
-summary(g)
-plot(investment$age,investment$income)
-predicted= predict(g, data.frame(age = investment$age), type="response")
-# draws a curve based on prediction from logistic regression model
-
-points(investment$age,fitted(g),pch=20)
-
-```
-```{r}
-
-g = glm(income ~ age+education, family=binomial(logit), data=investment, control = list(maxit = 50)) 
-summary(g)
-
-predicted= predict(g, data.frame(age = investment$age, education = investment$education), type="response")
-
-plot(investment$income,predicted,pch=20)
+mylogit4 <- glm(investor ~ age +education+ sex +income, data = investment, family = "binomial")
+summary(mylogit4)
 ```
