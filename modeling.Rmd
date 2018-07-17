@@ -112,25 +112,24 @@ glmFit = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "glm",
 ```
 
 
-# Run all models with imputing missing values.
 ```{r}
-Adult_dummy_imputed = knnImputation(Adult_dummy)
-colnames(Adult_dummy_imputed)[colnames(Adult_dummy_imputed)=="income..50K"] = "income"
-levels(Adult_dummy_imputed$income) =      make.names(levels(factor(Adult_dummy_imputed$income)))
+resamps= resamples(list(knn = knnFit, rf = rfFit, svm = svm_linearFit_tuned, gbm = gbmFit, glm = glmFit))
+summary(resamps)
+theme1 <- trellis.par.get()
+theme1$plot.symbol$col = rgb(.2, .2, .2, .4)
+theme1$plot.symbol$pch = 16
+theme1$plot.line$col = rgb(1, 0, 0, .7)
+theme1$plot.line$lwd <- 2
+trellis.par.set(theme1)
+bwplot(resamps, layout = c(3, 1))
+difValues <- diff(resamps)
+summary(difValues)
+parallelplot(resamps)
+trellis.par.set(caretTheme())
+dotplot(resamps, metric = "ROC")
+
 ```
 
-```{r}
-grid = expand.grid(k=c(19,31,41,51,101, 125,151, 201))
-knnFit_imputed = train(Adult_dummy_imputed[,P1], Adult_dummy_imputed[,"income"], method = "knn", use.all = T,trControl = ctrl, metric = "ROC", tuneGrid = grid)
-```
-
-
-
-```{r}
-rfFit_imputed = train(Adult_dummy_imputed[,P1], Adult_dummy_imputed[,"income"], method = "rf", trControl = Ctrl, metric = "ROC", tuneLength = 10)
-
-```
-Since imputation is not improving the result, therefore continuing with the deleted missing values.
 
 
 
@@ -178,6 +177,47 @@ anova(GLMFit$finalModel,GLM1Fit$finalModel, glmFit$finalModel,test = "Chisq")
 
 
 
+# Comparing models
+```{r}
+Resamps= resamples(list(KNN=KNNFit, SVM = SVM_linearFit,GBM = GBMFit, GLM =GLMFit))
+summary(Resamps)
+theme1 <- trellis.par.get()
+theme1$plot.symbol$col = rgb(.2, .2, .2, .4)
+theme1$plot.symbol$pch = 16
+theme1$plot.line$col = rgb(1, 0, 0, .7)
+theme1$plot.line$lwd <- 2
+trellis.par.set(theme1)
+bwplot(Resamps, layout = c(3, 1))
+DifValues <- diff(Resamps)
+summary(DifValues)
+parallelplot(Resamps)
+trellis.par.set(caretTheme())
+dotplot(Resamps, metric = "ROC")
+
+```
+
+
+# Run knn and gbm with imputing missing values to see improvement in the models.
+```{r}
+Adult_dummy_imputed = knnImputation(Adult_dummy)
+colnames(Adult_dummy_imputed)[colnames(Adult_dummy_imputed)=="income..50K"] = "income"
+levels(Adult_dummy_imputed$income) =      make.names(levels(factor(Adult_dummy_imputed$income)))
+```
+
+```{r}
+KNNFit_imputed = train(Adult_dummy_imputed[,results$optVariables], Adult_dummy_imputed[,"income"], method = "knn", use.all = T,trControl = ctrl, metric = "ROC", tuneGrid = expand.grid(k= 125))
+```
+
+```{r}
+gbmFit_imputed = train(Adult_dummy_imputed[,results$optVariables], Adult_dummy_imputed[,"income"], method = "gbm",trControl = ctrl, metric = "ROC", tuneGrid = expand.grid(n.trees = 100, interaction.depth = 10 , shrinkage = 0.1, n.minobsinnode = 10))
+```
+
+```{r}
+GBMFit_imputed = train(Adult_dummy_imputed[,results$optVariables], Adult_dummy_imputed[,"income"], method = "gbm",trControl = ctrl, metric = "ROC", tuneGrid = expand.grid(n.trees = 450, interaction.depth =
+ 6, shrinkage = 0.1, n.minobsinnode = 10))
+
+```
+
 
 
 ```{r}
@@ -205,6 +245,8 @@ predictions_KNN = temp_KNN$pred[order(temp_KNN$rowIndex)]
 
 temp_GBM = GBMFit$pred[which(GBMFit$pred$interaction.depth==6 & GBMFit$pred$n.trees==450 & GBMFit$pred$shrinkage==0.1, GBMFit$pred$n.minobsinnode == 10),]
 predictions_GBM = temp_GBM$pred[order(temp_GBM$rowIndex)]
+temp_SVM = SVM_linearFit$pred[SVM_linearFit$pred$C==0.05,]
+prediction_SVM = temp_SVM$pred[order(temp_SVM$rowIndex)]
 
 
 #Confusion Matrix
@@ -217,7 +259,7 @@ cm_GLM = confusionMatrix(predictions_GLM,Adult_dummy_del[,"income"])
 cm_GLM1 = confusionMatrix(predictions_GLM1,Adult_dummy_del[,"income"])
 cm_KNN = confusionMatrix(predictions_KNN,Adult_dummy_del[,"income"])
 cm_GBM = confusionMatrix(predictions_GBM,Adult_dummy_del[,"income"])
-
+cm_SVM = confusionMatrix(prediction_SVM, Adult_dummy_del[,"income"] )
 
 ```
 
@@ -254,21 +296,6 @@ rownames(Table) = c("kNN", "Gradient Boost", "Regression")
 Table
 ```
 
-
-
-# Comparing models
-```{r}
-resamps= resamples(list(knn20 = knnFit, knn37 =KNNFit, rf = rfFit, svm = svm_linearFit_tuned, gbm20 = gbmFit, gbm37 = GBMFit, glm20 = glmFit, glm37 =GLMFit))
-theme1 <- trellis.par.get()
-theme1$plot.symbol$col = rgb(.2, .2, .2, .4)
-theme1$plot.symbol$pch = 16
-theme1$plot.line$col = rgb(1, 0, 0, .7)
-theme1$plot.line$lwd <- 2
-trellis.par.set(theme1)
-bwplot(resamps, layout = c(3, 1))
-difValues <- diff(resamps)
-summary(difValues)
-```
 
 
 
