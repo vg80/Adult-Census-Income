@@ -179,7 +179,7 @@ anova(GLMFit$finalModel,GLM1Fit$finalModel, glmFit$finalModel,test = "Chisq")
 
 # Comparing models
 ```{r}
-Resamps= resamples(list(KNN=KNNFit, SVM = SVM_linearFit,GBM = GBMFit, GLM =GLMFit))
+Resamps= resamples(list(KNN=KNNFit, RF= RFFit, SVM = SVM_linearFit,GBM = GBMFit, GLM =GLMFit))
 summary(Resamps)
 theme1 <- trellis.par.get()
 theme1$plot.symbol$col = rgb(.2, .2, .2, .4)
@@ -242,6 +242,8 @@ predictions_GLM1 = GLM1Fit$pred$pred[order(GLM1Fit$pred$rowIndex)]
 
 temp_KNN = KNNFit$pred[KNNFit$pred$k==125,]
 predictions_KNN = temp_KNN$pred[order(temp_KNN$rowIndex)]
+temp_RF = RFFit$pred[RFFit$pred$mtry==2,]
+predictions_RF = temp_RF$pred[order(temp_RF$rowIndex)]
 
 temp_GBM = GBMFit$pred[which(GBMFit$pred$interaction.depth==6 & GBMFit$pred$n.trees==450 & GBMFit$pred$shrinkage==0.1, GBMFit$pred$n.minobsinnode == 10),]
 predictions_GBM = temp_GBM$pred[order(temp_GBM$rowIndex)]
@@ -301,12 +303,14 @@ Table
 
 ```{r}
 #Predictors for top 3 models 
-top_models = data.frame(pred_knn = predictions_KNN,pred_rf =predictions_rf, pred_gbm = predictions_gbm, pred_glm = predictions_GLM) 
+top_models = data.frame(pred_knn = predictions_KNN,pred_rf =predictions_RF, pred_gbm = predictions_GBM, actual = Adult_dummy_del$income) 
 
 #Ensembling
 
-top_models$pred_majority = as.factor(ifelse(top_models$pred_gbm=='X0' & top_models$pred_knn=='X0','X0',ifelse(top_models$pred_gbm=='X0' & top_models$pred_glm=='X0','X0',ifelse(top_models$pred_knn=='X0' & top_models$pred_glm=='X0','X0','X1'))))
+top_models$pred_majority = as.factor(ifelse(top_models$pred_gbm=='X0' & top_models$pred_knn=='X0','X0',ifelse(top_models$pred_gbm=='X0' & top_models$pred_rf=='X0','X0',ifelse(top_models$pred_knn=='X0' & top_models$pred_rf=='X0','X0','X1'))))
 cm_ensemble = confusionMatrix(top_models$pred_majority, Adult_dummy_del$income)
 
+# rf for ensembling
+ensemble_rf = train(actual~., top_models,method = "rf", metric= "ROC", tunelength=3, trControl=ctrl)
 
 ```
