@@ -175,11 +175,16 @@ GLM1Fit = train(Adult_dummy_del[,lessPvalues], Adult_dummy_del[,"income"], metho
 anova(GLMFit$finalModel,GLM1Fit$finalModel, glmFit$finalModel,test = "Chisq")
 ```
 
-
+Neural Network Model
+```{r}
+my.grid = expand.grid(.decay = c(0,0.5, 0.1), .size = c(1,3,5, 6, 7))
+  
+nnetFit= train(Adult_dummy_del[,results$optVariables], Adult_dummy_del[,"income"], method='nnet', trControl = ctrl, metric = "ROC", tuneGrid = my.grid, maxit= 200)
+```
 
 # Comparing models
 ```{r}
-Resamps= resamples(list(KNN=KNNFit, RF= RFFit, SVM = SVM_linearFit,GBM = GBMFit, GLM =GLMFit))
+Resamps= resamples(list(KNN=KNNFit, RF= RFFit, SVM = SVM_linearFit,GBM = GBMFit, GLM =GLMFit, NNet= nnetFit))
 summary(Resamps)
 theme1 <- trellis.par.get()
 theme1$plot.symbol$col = rgb(.2, .2, .2, .4)
@@ -249,7 +254,8 @@ temp_GBM = GBMFit$pred[which(GBMFit$pred$interaction.depth==6 & GBMFit$pred$n.tr
 predictions_GBM = temp_GBM$pred[order(temp_GBM$rowIndex)]
 temp_SVM = SVM_linearFit$pred[SVM_linearFit$pred$C==0.05,]
 prediction_SVM = temp_SVM$pred[order(temp_SVM$rowIndex)]
-
+temp_NNet = nnetFit$pred[nnetFit$pred$size==6&nnetFit$pred$decay==0.5,]
+prediction_NNet = temp_NNet$pred[order(temp_NNet$rowIndex)]
 
 #Confusion Matrix
 cm_knn = confusionMatrix(predictions_knn,Adult_dummy_del[,"income"])
@@ -262,20 +268,22 @@ cm_GLM1 = confusionMatrix(predictions_GLM1,Adult_dummy_del[,"income"])
 cm_KNN = confusionMatrix(predictions_KNN,Adult_dummy_del[,"income"])
 cm_GBM = confusionMatrix(predictions_GBM,Adult_dummy_del[,"income"])
 cm_SVM = confusionMatrix(prediction_SVM, Adult_dummy_del[,"income"] )
-
+cm_RF = confusionMatrix(predictions_RF, Adult_dummy_del[, "income"])
+cm_NNet = confusionMatrix(prediction_NNet,Adult_dummy_del[, "income"] )
 ```
 
 ```{r}
 # Plotting ROC
 library(pROC)
-plot.roc(knnFit$pred$obs[knnFit$pred$k == 101],knnFit$pred$X0[knnFit$pred$k == 101], col = "blue")
+plot.roc(KNNFit$pred$obs[KNNFit$pred$k == 125],KNNFit$pred$X0[KNNFit$pred$k == 125], col = "blue")
 
-plot.roc(rfFit$pred$obs[rfFit$pred$mtry == 2],rfFit$pred$X0[rfFit$pred$mtry == 2], add= T, col = "black")
+plot.roc(RFFit$pred$obs[RFFit$pred$mtry == 2],RFFit$pred$X0[RFFit$pred$mtry == 2], add= T, col = "black")
 
-plot.roc(gbmFit$pred$obs[gbmFit$pred$interaction.depth==10 & gbmFit$pred$n.trees==100 & gbmFit$pred$shrinkage==0.1& gbmFit$pred$n.minobsinnode == 10],gbmFit$pred$X0[gbmFit$pred$interaction.depth==10 & gbmFit$pred$n.trees==100 & gbmFit$pred$shrinkage==0.1& gbmFit$pred$n.minobsinnode == 10], add = T, col = "red")
+plot.roc(GBMFit$pred$obs[GBMFit$pred$interaction.depth==6 & GBMFit$pred$n.trees==450 & GBMFit$pred$shrinkage==0.1& GBMFit$pred$n.minobsinnode == 10], GBMFit$pred$X0[GBMFit$pred$interaction.depth==6 & GBMFit$pred$n.trees==450 & GBMFit$pred$shrinkage==0.1& GBMFit$pred$n.minobsinnode == 10], add = T, col = "red")
 
-plot.roc(svm_linearFit_tuned$pred$obs[svm_linearFit_tuned$pred$C==0.25], svm_linearFit_tuned$pred$X0[svm_linearFit_tuned$pred$C==0.25], add = T,col = "green")
-plot.roc(glmFit$pred$obs, glmFit$pred$X0, add =T, col = "purple")
+plot.roc(SVM_linearFit$pred$obs[SVM_linearFit$pred$C==0.05], SVM_linearFit$pred$X0[SVM_linearFit$pred$C==0.05], add = T,col = "green")
+plot.roc(GLMFit$pred$obs, GLMFit$pred$X0, add =T, col = "purple")
+plot.roc(nnetFit$pred$obs[nnetFit$pred$size==6&nnetFit$pred$decay==0.5], nnetFit$pred$X0[nnetFit$pred$size==6&nnetFit$pred$decay==0.5], add = T, col = "yellow")
 
 ```
 
@@ -290,27 +298,26 @@ table = data.frame(BalancedAccuracy = col1, Fmeasure = col2, Accuracy = col3)
 rownames(table) = c("kNN", "Random Forests", "Support vector Machine", "Gradient Boost", "Regression")
 
 #Table for comparison
-col1=c(cm_KNN$byClass["Balanced Accuracy"], cm_GBM$byClass["Balanced Accuracy"], cm_GLM$byClass["Balanced Accuracy"])
-col2=c(cm_KNN$byClass["F1"], cm_GBM$byClass["F1"], cm_GLM$byClass["F1"])
-col3=c(cm_KNN$overall["Accuracy"], cm_GBM$overall["Accuracy"], cm_GLM$overall["Accuracy"])
+col1=c(cm_KNN$byClass["Balanced Accuracy"],cm_RF$byClass["Balanced Accuracy"], cm_SVM$byClass["Balanced Accuracy"] , cm_GBM$byClass["Balanced Accuracy"], cm_GLM$byClass["Balanced Accuracy"], cm_NNet$byClass["Balanced Accuracy"])
+col2=c(cm_KNN$byClass["F1"],cm_RF$byClass["F1"], cm_SVM$byClass["F1"], cm_GBM$byClass["F1"], cm_GLM$byClass["F1"], cm_NNet$byClass["F1"])
+col3=c(cm_KNN$overall["Accuracy"],cm_RF$overall["Accuracy"] , cm_SVM$overall["Accuracy"], cm_GBM$overall["Accuracy"], cm_GLM$overall["Accuracy"], cm_NNet$overall["Accuracy"])
 Table = data.frame(BalancedAccuracy = col1, Fmeasure = col2, Accuracy = col3)
-rownames(Table) = c("kNN", "Gradient Boost", "Regression")
+rownames(Table) = c("kNN", "Random Forests", "Support Vector Machine","Gradient Boost","Generalized Linear Model", "Neural Network")
 Table
 ```
 
 
 
-
 ```{r}
 #Predictors for top 3 models 
-top_models = data.frame(pred_knn = predictions_KNN,pred_rf =predictions_RF, pred_gbm = predictions_GBM, actual = Adult_dummy_del$income) 
+top_models = data.frame(pred_knn = predictions_KNN,pred_rf =predictions_RF, pred_GBM = predictions_GBM, pred_Nnet= prediction_NNet ,actual= Adult_dummy_del$income) 
 
 #Ensembling
 
-top_models$pred_majority = as.factor(ifelse(top_models$pred_gbm=='X0' & top_models$pred_knn=='X0','X0',ifelse(top_models$pred_gbm=='X0' & top_models$pred_rf=='X0','X0',ifelse(top_models$pred_knn=='X0' & top_models$pred_rf=='X0','X0','X1'))))
+top_models$pred_majority = as.factor(ifelse(top_models$pred_GBM =='X0' & top_models$pred_Nnet=='X0','X0',ifelse(top_models$pred_GBM=='X0' & top_models$pred_rf=='X0','X0',ifelse(top_models$pred_Nnet=='X0' & top_models$pred_rf=='X0','X0','X1'))))
 cm_ensemble = confusionMatrix(top_models$pred_majority, Adult_dummy_del$income)
 
-# rf for ensembling
-ensemble_rf = train(actual~., top_models,method = "rf", metric= "ROC", tunelength=3, trControl=ctrl)
+# glm for ensembling
+ensemble_glm = train(actual~pred_rf+pred_GBM+pred_Nnet+predictions_KNN, top_models,method = "glm", metric= "ROC", trControl=ctrl)
 
 ```
