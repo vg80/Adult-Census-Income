@@ -5,40 +5,35 @@ date: "June 6, 2018"
 output: html_document
 ---
 
-1) Is there any gender inequality in the society, that is, do the females earn less /more than males while working in same occupation and same work class?
-```{r}
 
-model1 = glm(income~sex+workclass+occupation, data= Adult, na.action = na.omit, family = "binomial")
-summary(model1)
+
+Regression Model
+```{r}
+Adult_del = Adult[which(complete.cases(Adult)==TRUE),]
+model = glm(income~.,data = Adult_del, family= "binomial")
+Null =  glm(income~1,data = Adult_del, family= "binomial")
+step <- step(Null, scope=list(lower=Null, upper=model), direction= "both", trace=TRUE)
+
+vif(step)
+model_1= glm(income~age+workclass+education+occupation+relationship+race+sex+nativecountry+capitalgain_cat+capitalloss_cat+hoursperweek_cat, data = Adult_del, family = "binomial")
+model_2 = glm(income~age+workclass+education+maritalstatus+occupation+race+sex+nativecountry+capitalgain_cat+capitalloss_cat+hoursperweek_cat, data = Adult_del, family = "binomial")
+model_3 = glm(income~age+workclass+education+occupation+race+sex+nativecountry+capitalgain_cat+capitalloss_cat+hoursperweek_cat, data = Adult_del, family = "binomial")
+anova(model, model_3, test = "Chisq")
+anova(model,model_2, test = "Chisq")
+anova(model, model_1, test = "Chisq")
+summ = summary(step)
+# log odds and their confidence interval
+Y = exp(confint.default(step))
+X=exp(coef(step))
+XY = data.frame(odds = X, confInt_lower = Y[,1], confInt_upper = Y[,2])
+XY$odds = round(XY$odds,4)
+XY$confInt_lower = round(XY$confInt_lower,4)
+XY$confInt_upper = round(XY$confInt_upper,4)
 ```
 
-
-The intercept= -1.94255 which corresponds to the log odds for females being in higher income class (since female is the reference group).So the odds of female being inthe higher income group are 0.14
-
-The coefficient for male= 1.38894 which corresponds to the log of odds ratio between the male group and female group. The odds ratio equals 4.01 which means the odds for males are about 4.01 times of the odds for females, i.e. 0.5614, working in the federal government and having occupation admin - clerical.
-
-So we can say there is gender inequallity in the society under these conditions.
+1) Is there any gender inequality in the society, that is, do the females earn less /more than males while working in same occupation and same work class?
 
 2) There is a common belief that education is the key to become richer. Does the people who are highly educated more likely to earn above 50K as compared to others?
-
-```{r}
-# lets divide the education in two categories higher education and lower education.
-temp = Adult
-temp$educationlevel = ifelse(temp$education == "Bachelors"|temp$education == "Masters"|temp$education == "Doctrate"| temp$education == "Prof-school"|temp$education == "Assoc-acdm"|temp$education == "Assoc-voc", "higher education", "lower education")
-model2 = glm(income~educationlevel, data = temp, family = "binomial", na.action = na.omit)
-summary(model2)
-```
-
-The intercept= -0.33548 which corresponds to the log odds for higher educated people being in higher income class. So odds of higher educated people to be in higher income class are  0.7149948(0.72)
-
-The coefficient for lower educated = -1.32709 which corresponds to the log of odds ratio between the lower educated group and higher educated group. The odds ratio equals 0.265 which means the odds forlower education group are 0.265 times of the odds for higher educated people. Thus odds of lower educated group are 0.1897(0.19)
-
-So we can say the higher education is the key to success in the future.
-
-
-
-
-
 
 
 3)	Find the people who would likely to make the investment.
@@ -61,9 +56,10 @@ table(investment$investor)
 mylogitnull = glm(investor~1, data= investment, family = binomial)
 summary(mylogitnull)
 ```
+
 ```{r}
 
-mylogitfull = glm(investor~age + workclass+ fnlwgt +educationnum + maritalstatus +occupation +relationship+ race +sex +hoursperweek_cat + nativecountry +income, investment, family = binomial)
+mylogitfull = glm(investor~age + workclass+ fnlwgt +educationnum+ maritalstatus +occupation +relationship+ race +sex +hoursperweek_cat + nativecountry +income, investment, family = binomial)
 summary(mylogitfull)
 anova(mylogitfull, test = "LRT")
 ```
@@ -76,7 +72,7 @@ summary(mylogit1)
 anova(mylogitfull, mylogit1, test = "Chisq")
 anova(mylogit1, test = "Chisq")
 ```
-p value is not <0.05, therefore models are not different.
+p value is not <0.05, therefore models are not different. That means race , native country and fnlwt does not contribute much to the model.
 
 
 ```{r}
