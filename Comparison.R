@@ -84,3 +84,65 @@ col3=c(cm_KNN$overall["Accuracy"],cm_RF$overall["Accuracy"] , cm_SVM$overall["Ac
 Table = data.frame(BalancedAccuracy = col1, Fmeasure = col2, Accuracy = col3)
 rownames(Table) = c("kNN", "Random Forests", "Support Vector Machine","Gradient Boost","Generalized Linear Model", "Neural Network")
 Table
+# stability of Models
+# we are checking the stability of GLM since it takes not much time.
+# 2- fold
+set.seed(400)
+ctrl2 = trainControl(method = "cv", 
+                    number = 2, 
+                    sampling = "smote",
+                    summaryFunction= twoClassSummary, 
+                    classProbs=T,
+                    savePredictions = T)
+GLMFit_2Fold = train(Adult_dummy_del[,results$optVariables], Adult_dummy_del[,"income"], 
+               method = "glm", trControl = ctrl2, metric = "ROC", family="binomial")
+GBMFit_2Fold = train(Adult_dummy_imputed[,results$optVariables], Adult_dummy_imputed[,"income"],
+            method = "gbm",trControl = ctrl2, metric = "ROC", tuneGrid = expand.grid(n.trees = 450, interaction.depth =
+                                                                                                                                                                             6, shrinkage = 0.1, n.minobsinnode = 10))
+# 3-fold
+ctrl3 = trainControl(method = "cv", 
+                     number = 3, 
+                     sampling = "smote",
+                     summaryFunction= twoClassSummary, 
+                     classProbs=T,
+                     savePredictions = T)
+GLMFit_3Fold = train(Adult_dummy_del[,results$optVariables], Adult_dummy_del[,"income"], 
+                     method = "glm", trControl = ctrl3, metric = "ROC", family="binomial")
+GBMFit_3Fold = train(Adult_dummy_imputed[,results$optVariables], Adult_dummy_imputed[,"income"], method = "gbm",trControl = ctrl3, metric = "ROC", tuneGrid = expand.grid(n.trees = 450, interaction.depth =
+                                                                                                                                                                             6, shrinkage = 0.1, n.minobsinnode = 10))
+# 4-fold
+ctrl4 = trainControl(method = "cv", 
+                     number = 4, 
+                     sampling = "smote",
+                     summaryFunction= twoClassSummary, 
+                     classProbs=T,
+                     savePredictions = T)
+GLMFit_4Fold = train(Adult_dummy_del[,results$optVariables], Adult_dummy_del[,"income"], 
+                     method = "glm", trControl = ctrl4, metric = "ROC", family="binomial")
+GBMFit_4Fold = train(Adult_dummy_imputed[,results$optVariables], Adult_dummy_imputed[,"income"], method = "gbm",trControl = ctrl4, metric = "ROC", tuneGrid = expand.grid(n.trees = 450, interaction.depth =6, shrinkage = 0.1, n.minobsinnode = 10))
+                                                                                                                                                                            
+# 6-fold
+ctrl6 = trainControl(method = "cv", 
+                     number = 6, 
+                     sampling = "smote",
+                     summaryFunction= twoClassSummary, 
+                     classProbs=T,
+                     savePredictions = T)
+GLMFit_6Fold = train(Adult_dummy_del[,results$optVariables], Adult_dummy_del[,"income"], 
+                     method = "glm", trControl = ctrl6, metric = "ROC", family="binomial")
+GBMFit_6Fold = train(Adult_dummy_imputed[,results$optVariables], Adult_dummy_imputed[,"income"], method = "gbm",trControl = ctrl6, metric = "ROC", tuneGrid = expand.grid(n.trees = 450, interaction.depth =6, shrinkage = 0.1, n.minobsinnode = 10))
+
+# Ensembling using Stacking
+modelCor(Resamples_imputed)
+algorithmList <- c('knn', 'rf', 'gbm', 'glm', 'nnet')
+models = caretList(Adult_dummy_imputed[,results$optVariables], Adult_dummy_imputed[,"income"],
+         trControl=ctrl, methodList=algorithmList,tuneList = list(
+           knn=caretModelSpec(method="knn", tuneGrid=data.frame(k=125)),
+           rf=caretModelSpec(method="rf", tuneGrid=data.frame(.mtry=2)),
+    gbm=caretModelSpec(method="gbm", tuneGrid=data.frame(n.trees = 450, interaction.depth = 6, shrinkage = 0.1, n.minobsinnode = 10)),
+    nnet = caretModelSpec(method = "nnet", tuneGrid = data.frame(size = 6, decay = 0.5))),
+    metric = "ROC")
+# Support vector machine is highly correlated with RF and NNet. so removing SVM
+models = list(KNNFit_imputed, RFFit_imputed, GBMFit_imputed, GLMFit_imputed, nnetFit_imputed)
+class(models) = "caretList"
+stack.glm <- caretStack(models, method="glm", metric="ROC", trControl=ctrl)

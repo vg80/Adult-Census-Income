@@ -73,6 +73,7 @@ unique(adult$age)
 summary(adult$age)
 describe(adult$age)
 hist(adult$age, col = "blue", main = "Histogram of age")
+boxplot(adult$age, main = "boxplot of age")
 boxplot.stats(adult$age)$out
 ```
 
