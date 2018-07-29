@@ -140,23 +140,74 @@ ctrl7 = trainControl(method = "cv",
                      savePredictions = T)
 GBMFit_7Fold = train(Adult_dummy_imputed[,results$optVariables], Adult_dummy_imputed[,"income"], method = "gbm",trControl = ctrl7, metric = "ROC", tuneGrid = expand.grid(n.trees = 450, interaction.depth =6, shrinkage = 0.1, n.minobsinnode = 10))
 
-# Ensembling using Stacking
+# Ensembling
 
 algorithmList <- c('knn', 'rf', 'gbm', 'glm', 'nnet')
 models = caretList(Adult_dummy_imputed[,results$optVariables], Adult_dummy_imputed[,"income"],
-         trControl=ctrl, methodList=algorithmList,tuneList = list(
-           knn=caretModelSpec(method="knn", tuneGrid=data.frame(k=125)),
-           rf=caretModelSpec(method="rf", tuneGrid=data.frame(.mtry=2)),
-    gbm=caretModelSpec(method="gbm", tuneGrid=data.frame(n.trees = 450, interaction.depth = 6, shrinkage = 0.1, n.minobsinnode = 10)),
-    nnet = caretModelSpec(method = "nnet", tuneGrid = data.frame(size = 6, decay = 0.5))),
-    metric = "ROC")
+                   trControl=ctrl, methodList=algorithmList,tuneList = list(
+                     knn=caretModelSpec(method="knn", tuneGrid=data.frame(k=125)),
+                     rf=caretModelSpec(method="rf", tuneGrid=data.frame(.mtry=2)),
+                     gbm=caretModelSpec(method="gbm", tuneGrid=data.frame(n.trees = 450, interaction.depth = 6, shrinkage = 0.1, n.minobsinnode = 10)),
+                     nnet = caretModelSpec(method = "nnet", tuneGrid = data.frame(size = 6, decay = 0.5))),
+                   metric = "ROC")
 # Support vector machine is highly correlated with RF and NNet. so removing SVM
-modelCor(resamples(models))
 submodels = models[c("knn","rf" , "gbm","nnet", "glm")]
 class(submodels) = "caretList"
 stack_rf <- caretStack(submodels, method="rf", metric="ROC", trControl=ctrl)
-temp_stack_rf = stack_rf$ens_model$pred[stack_rf$ens_model$pred$mtry==2,]
-predictions_stack_rf = temp_stack_rf$pred[order(temp_stack_rf$rowIndex)]
-cm_stack_rf = confusionMatrix(predictions_stack_rf, Adult_dummy_imputed[,"income"])
 
-stack_rf_1 = caretstack(submodels[c("knn", "nnet")], method = "rf", metric = "ROC", trControl = ctrl)
+
+submodels1 = models[c("knn", "nnet")]
+class(submodels1) = "caretList"
+
+# greedy ensembling using caretEnsemble
+greedy_ensemble1 <- caretEnsemble(
+  submodels1, 
+  metric="ROC",
+  trControl=trainControl(
+    number=2,
+    summaryFunction=twoClassSummary,
+    classProbs=TRUE
+  ))
+#cofusion matrix
+cm_caretEnsemble = confusionMatrix.train(greedy_ensemble1$ens_model)
+balacc = (recall(cm_caretEnsemble$table)+recall(cm_caretEnsemble$table,"X1"))/2
+
+# stacking with glm
+glmstack <- caretStack(
+  submodels1,
+  method="glm",
+  metric="ROC",
+  trControl=trainControl(
+    method="cv",
+    number=5,
+    savePredictions="final",
+    classProbs=TRUE,
+    summaryFunction=twoClassSummary
+  ))
+#cofusion matrix
+cm_glmstack = confusionMatrix.train(glmstack$ens_model)
+balacc = (recall(cm_glmstack$table)+recall(cm_glmstack$table,"X1"))/2
+# stacking with gbm
+gbmstack <- caretStack(
+  submodels1,
+  method="gbm",
+  metric="ROC",
+  trControl=trainControl(
+    method="cv",
+    number=5,
+    savePredictions="final",
+    classProbs=TRUE,
+    summaryFunction=twoClassSummary
+  ))
+
+#cofusion matrix
+cm_gbmstack = confusionMatrix.train(gbmstack$ens_model)
+balacc = (recall(cm_gbmstack$table)+recall(cm_gbmstack$table,"X1"))/2
+F_meas(cm_gbmstack$table)
+F_meas(cm_gbmstack$table, "X1")
+# Stacking with random forests
+stack_rf_1 = caretStack(submodels1, method = "rf", metric = "ROC", trControl = ctrl)
+cm_stack_rf = confusionMatrix.train(stack_rf_1$ens_model)
+balacc = (recall(cm_stack_rf$table)+recall(cm_stack_rf$table,"X1"))/2
+F_meas(cm_stack_rf$table)
+F_meas(cm_stack_rf$table, "X1")

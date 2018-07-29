@@ -4,6 +4,7 @@ author: "vidhu"
 date: "June 15, 2018"
 output: html_document
 ---
+
 ```{r}
 
 levels(Adult_dummy_del$income) =      make.names(levels(factor(Adult_dummy_del$income)))
@@ -23,18 +24,14 @@ ctrl = trainControl(method = "cv",
 ```{r}
 grid = expand.grid(k=c(19,31,41,51,101, 125,151, 201))
 knnFit = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "knn", use.all = T,trControl = ctrl, metric = "ROC", tuneGrid = grid)
+plot(knnFit)
 ```
 
-```{r}
-plot(knnFit)
-varImp(knnFit)
-plot(varImp(knnFit), main = "variable importance knn")
-```
 
 # Random Forest- smote
 ```{r}
 rfFit = train(Adult_dummy_del[,P1], Adult_dummy_del[,"income"], method = "rf", trControl = ctrl, metric = "ROC", tuneLength = 5)
-
+plot(rfFit)
 ```
 
 ```{r}
@@ -66,15 +63,6 @@ Tuning parameter 'mtry' was held constant at a value of 2
 Even ran the rf for ntree = 300 and 1000. 
 for 300, the roc was lower and for 1000, it was not able to fit the model. So the tunned model will have ntree = 500 and mtry = 2
 --------
-```{r}
-# Final model 
-rfFit
-plot(rfFit)
-#look at the variable importance and ploting
-varImp(rfFit)
-plot(varImp(rfFit), main = "variable importance random forests")
-
-```
 # Support vector Machine model
 ```{r}
 
@@ -310,14 +298,37 @@ Table
 
 ```{r}
 #Predictors for top 3 models 
-top_models = data.frame(pred_knn = predictions_KNN,pred_rf =predictions_RF, pred_GBM = predictions_GBM, pred_Nnet= prediction_NNet ,actual= Adult_dummy_del$income) 
+predictions_models = data.frame(pred_knn= predictions_KNNImputed,pred_rf =predictions_RFImputed, pred_svm = prediction_SVMImputed,pred_GBM = predictions_GBMImputed, pred_glm = predictions_GLMImputed,pred_Nnet= prediction_NNetImputed,actual= Adult_dummy_imputed$income) 
 
-#Ensembling
-
-top_models$pred_majority = as.factor(ifelse(top_models$pred_GBM =='X0' & top_models$pred_Nnet=='X0','X0',ifelse(top_models$pred_GBM=='X0' & top_models$pred_rf=='X0','X0',ifelse(top_models$pred_Nnet=='X0' & top_models$pred_rf=='X0','X0','X1'))))
-cm_ensemble = confusionMatrix(top_models$pred_majority, Adult_dummy_del$income)
 
 # glm for ensembling
-ensemble_glm = train(actual~pred_rf+pred_GBM+pred_Nnet+predictions_KNN, top_models,method = "glm", metric= "ROC", trControl=ctrl)
+ensemble_glmfull = train(actual~pred_glm+pred_GBM+pred_Nnet+pred_rf+pred_knn+pred_svm, predictions_models,method = "glm", family = "binomial", metric= "ROC", trControl=ctrl)
+confusionMatrix(ensemble_glmfull$pred$pred[order(ensemble_glmfull$pred$rowIndex)], Adult_dummy_imputed[,"income"])
+# XgbTree
+ensemble_Adaboost = train(actual~pred_glm+pred_GBM+pred_Nnet+pred_rf+pred_knn+pred_svm, predictions_models,method = "xgbTree", metric= "ROC", trControl=ctrl)
+
+
+# Extra
+ensemble_glm = train(actual~pred_glm+pred_GBM+pred_Nnet, predictions_models,method = "glm", family = "binomial", metric= "ROC", trControl=ctrl)
+ensemble_rf = train(actual~pred_glm+pred_GBM+pred_Nnet, predictions_models,method = "rf", metric= "ROC", trControl=ctrl3)
+# using svm, gbm and nnet 
+ensemble_glm1 = train(actual~pred_glm+pred_GBM+pred_svm, predictions_models,method = "glm", family = "binomial", metric= "ROC", trControl=ctrl)
+ensemble_rf1 = train(actual~pred_glm+pred_GBM+pred_svm, predictions_models,method = "rf", metric= "ROC", trControl=ctrl3)
+ensemble_gbm = train(actual~pred_glm+pred_GBM+pred_svm, predictions_models,method = "gbm", metric= "ROC", trControl=ctrl3)
+
+
 
 ```
+
+
+```{r}
+weighted_majority = as.factor(ifelse
+  (predictions_models$pred_knn =='X0' & predictions_models$pred_rf =='X0', 'X0', ifelse(predictions_models$pred_knn =='X1' &  predictions_models$pred_rf =='X1', 'X1', ifelse( predictions_models$pred_Nnet =='X1', 'X1','X0'))))
+cm_ensemble = confusionMatrix(weighted_majority, Adult_dummy_imputed$income, 'X1')
+cm_ensemble
+
+```
+
+
+
+
