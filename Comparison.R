@@ -131,9 +131,17 @@ ctrl6 = trainControl(method = "cv",
 GLMFit_6Fold = train(Adult_dummy_del[,results$optVariables], Adult_dummy_del[,"income"], 
                      method = "glm", trControl = ctrl6, metric = "ROC", family="binomial")
 GBMFit_6Fold = train(Adult_dummy_imputed[,results$optVariables], Adult_dummy_imputed[,"income"], method = "gbm",trControl = ctrl6, metric = "ROC", tuneGrid = expand.grid(n.trees = 450, interaction.depth =6, shrinkage = 0.1, n.minobsinnode = 10))
+# 7-fold
+ctrl7 = trainControl(method = "cv", 
+                     number = 7, 
+                     sampling = "smote",
+                     summaryFunction= twoClassSummary, 
+                     classProbs=T,
+                     savePredictions = T)
+GBMFit_7Fold = train(Adult_dummy_imputed[,results$optVariables], Adult_dummy_imputed[,"income"], method = "gbm",trControl = ctrl7, metric = "ROC", tuneGrid = expand.grid(n.trees = 450, interaction.depth =6, shrinkage = 0.1, n.minobsinnode = 10))
 
 # Ensembling using Stacking
-modelCor(Resamples_imputed)
+
 algorithmList <- c('knn', 'rf', 'gbm', 'glm', 'nnet')
 models = caretList(Adult_dummy_imputed[,results$optVariables], Adult_dummy_imputed[,"income"],
          trControl=ctrl, methodList=algorithmList,tuneList = list(
@@ -143,6 +151,12 @@ models = caretList(Adult_dummy_imputed[,results$optVariables], Adult_dummy_imput
     nnet = caretModelSpec(method = "nnet", tuneGrid = data.frame(size = 6, decay = 0.5))),
     metric = "ROC")
 # Support vector machine is highly correlated with RF and NNet. so removing SVM
-models = list(KNNFit_imputed, RFFit_imputed, GBMFit_imputed, GLMFit_imputed, nnetFit_imputed)
-class(models) = "caretList"
-stack.glm <- caretStack(models, method="glm", metric="ROC", trControl=ctrl)
+modelCor(resamples(models))
+submodels = models[c("knn","rf" , "gbm","nnet", "glm")]
+class(submodels) = "caretList"
+stack_rf <- caretStack(submodels, method="rf", metric="ROC", trControl=ctrl)
+temp_stack_rf = stack_rf$ens_model$pred[stack_rf$ens_model$pred$mtry==2,]
+predictions_stack_rf = temp_stack_rf$pred[order(temp_stack_rf$rowIndex)]
+cm_stack_rf = confusionMatrix(predictions_stack_rf, Adult_dummy_imputed[,"income"])
+
+stack_rf_1 = caretstack(submodels[c("knn", "nnet")], method = "rf", metric = "ROC", trControl = ctrl)
