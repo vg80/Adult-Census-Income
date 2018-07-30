@@ -211,7 +211,11 @@ GBMFit_imputed = train(Adult_dummy_imputed[,results$optVariables], Adult_dummy_i
 
 ```
 
-
+```{r}
+Grid = expand.grid(n.trees = 100, interaction.depth =
+ 10, shrinkage = 0.1, n.minobsinnode = 10)
+gbmFit_imputed = train(Adult_dummy_imputed[,P1], Adult_dummy_imputed[,"income"], method = "gbm", trControl = ctrl, metric = "ROC", tuneGrid = Grid)
+```
 
 ```{r}
 # predictions
@@ -293,42 +297,6 @@ Table = data.frame(BalancedAccuracy = col1, Fmeasure = col2, Accuracy = col3)
 rownames(Table) = c("kNN", "Random Forests", "Support Vector Machine","Gradient Boost","Generalized Linear Model", "Neural Network")
 Table
 ```
-
-
-
-```{r}
-#Predictors for top 3 models 
-predictions_models = data.frame(pred_knn= predictions_KNNImputed,pred_rf =predictions_RFImputed, pred_svm = prediction_SVMImputed,pred_GBM = predictions_GBMImputed, pred_glm = predictions_GLMImputed,pred_Nnet= prediction_NNetImputed,actual= Adult_dummy_imputed$income) 
-
-
-# glm for ensembling
-ensemble_glmfull = train(actual~pred_glm+pred_GBM+pred_Nnet+pred_rf+pred_knn+pred_svm, predictions_models,method = "glm", family = "binomial", metric= "ROC", trControl=ctrl)
-confusionMatrix(ensemble_glmfull$pred$pred[order(ensemble_glmfull$pred$rowIndex)], Adult_dummy_imputed[,"income"])
-# XgbTree
-ensemble_Adaboost = train(actual~pred_glm+pred_GBM+pred_Nnet+pred_rf+pred_knn+pred_svm, predictions_models,method = "xgbTree", metric= "ROC", trControl=ctrl)
-
-
-# Extra
-ensemble_glm = train(actual~pred_glm+pred_GBM+pred_Nnet, predictions_models,method = "glm", family = "binomial", metric= "ROC", trControl=ctrl)
-ensemble_rf = train(actual~pred_glm+pred_GBM+pred_Nnet, predictions_models,method = "rf", metric= "ROC", trControl=ctrl3)
-# using svm, gbm and nnet 
-ensemble_glm1 = train(actual~pred_glm+pred_GBM+pred_svm, predictions_models,method = "glm", family = "binomial", metric= "ROC", trControl=ctrl)
-ensemble_rf1 = train(actual~pred_glm+pred_GBM+pred_svm, predictions_models,method = "rf", metric= "ROC", trControl=ctrl3)
-ensemble_gbm = train(actual~pred_glm+pred_GBM+pred_svm, predictions_models,method = "gbm", metric= "ROC", trControl=ctrl3)
-
-
-
-```
-
-
-```{r}
-weighted_majority = as.factor(ifelse
-  (predictions_models$pred_knn =='X0' & predictions_models$pred_rf =='X0', 'X0', ifelse(predictions_models$pred_knn =='X1' &  predictions_models$pred_rf =='X1', 'X1', ifelse( predictions_models$pred_Nnet =='X1', 'X1','X0'))))
-cm_ensemble = confusionMatrix(weighted_majority, Adult_dummy_imputed$income, 'X1')
-cm_ensemble
-
-```
-
 
 
 

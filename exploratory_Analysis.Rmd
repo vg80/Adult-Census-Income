@@ -1,5 +1,5 @@
 ---
-title: "Clustering"
+title: "Exploratory Analysis"
 author: "vidhu"
 date: "June 6, 2018"
 output: html_document
@@ -22,6 +22,7 @@ anova(model, model_3, test = "Chisq")
 anova(model,model_2, test = "Chisq")
 anova(model, model_1, test = "Chisq")
 summ = summary(step)
+model_4=glm(income~age+workclass+education+occupation+relationship+race+maritalstatus+nativecountry+capitalgain_cat+capitalloss_cat+hoursperweek_cat, data = Adult_del, family = "binomial")
 # log odds and their confidence interval
 Y = exp(confint.default(step))
 X=exp(coef(step))
